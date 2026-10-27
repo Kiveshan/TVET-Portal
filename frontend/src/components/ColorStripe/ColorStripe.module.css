@@ -1,0 +1,7 @@
+.stripe {
+  display: flex;
+  width: 340px;
+  max-width: 100%;
+  height: 6px;
+  margin: 0 auto;
+}

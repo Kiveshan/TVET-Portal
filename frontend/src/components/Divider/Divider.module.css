@@ -1,0 +1,6 @@
+.divider {
+  width: 100%;
+  margin: 0;
+  border: none;
+  border-top: 4px solid var(--color-gold-divider);
+}

@@ -1,0 +1,65 @@
+.card {
+  margin-top: 110px;
+  padding-top: 88px;
+  padding-bottom: 120px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  max-width: 460px;
+  margin: 0 auto;
+}
+
+.heading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  margin: 0 -10px 52px;
+}
+
+.title {
+  margin: 0;
+  color: var(--color-heading);
+  font-size: 48px;
+  font-weight: 700;
+  letter-spacing: -1px;
+}
+
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.submit {
+  margin-top: 46px;
+}
+
+.footer {
+  margin: 22px 0 0;
+  text-align: center;
+  color: var(--color-label);
+  font-size: 16px;
+}
+
+.stripe {
+  margin-top: 52px;
+}
+
+@media (max-width: 640px) {
+  .card {
+    margin-top: 32px;
+    padding-top: 40px;
+    padding-bottom: 48px;
+  }
+
+  .title {
+    font-size: 36px;
+  }
+
+  .heading {
+    margin: 0 0 32px;
+  }
+}
