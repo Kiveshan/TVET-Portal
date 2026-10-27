@@ -1,7 +1,6 @@
 .card {
-  margin-top: 110px;
-  padding-top: 88px;
-  padding-bottom: 120px;
+  padding-top: clamp(28px, 6vh, 88px);
+  padding-bottom: clamp(28px, 6vh, 88px);
 }
 
 .form {
@@ -15,14 +14,14 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 18px;
-  margin: 0 -10px 52px;
+  gap: var(--space-sm);
+  margin: 0 -10px var(--space-lg);
 }
 
 .title {
   margin: 0;
   color: var(--color-heading);
-  font-size: 48px;
+  font-size: var(--heading-size);
   font-weight: 700;
   letter-spacing: -1px;
 }
@@ -30,36 +29,26 @@
 .fields {
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: var(--space-md);
 }
 
 .submit {
-  margin-top: 46px;
+  margin-top: var(--space-lg);
 }
 
 .footer {
-  margin: 22px 0 0;
+  margin: var(--space-sm) 0 0;
   text-align: center;
   color: var(--color-label);
   font-size: 16px;
 }
 
 .stripe {
-  margin-top: 52px;
+  margin-top: var(--space-lg);
 }
 
 @media (max-width: 640px) {
-  .card {
-    margin-top: 32px;
-    padding-top: 40px;
-    padding-bottom: 48px;
-  }
-
-  .title {
-    font-size: 36px;
-  }
-
   .heading {
-    margin: 0 0 32px;
+    margin: 0 0 var(--space-lg);
   }
 }

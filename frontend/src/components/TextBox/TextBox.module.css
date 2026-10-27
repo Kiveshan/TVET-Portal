@@ -2,7 +2,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  height: 56px;
+  height: var(--control-height);
   padding: 0 16px;
   background: var(--color-input);
   border: 1px solid transparent;
@@ -34,6 +34,11 @@
   background: transparent;
   color: var(--color-body);
   font-size: 16px;
+}
+
+/* The wrapper shows the focus ring, so hide the global outline on the inner input */
+.input:focus-visible {
+  outline: none;
 }
 
 .input::placeholder {

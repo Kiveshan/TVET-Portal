@@ -1,8 +1,8 @@
 .logo {
   display: grid;
   place-items: center;
-  width: 142px;
-  height: 88px;
+  height: clamp(52px, 8vh, 88px);
+  aspect-ratio: 142 / 88;
   padding: 6px;
   background: var(--color-white);
   border-radius: 2px;
