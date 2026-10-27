@@ -12,6 +12,7 @@ export * from './Icon';
 export * from './KpiCard';
 export * from './Label';
 export * from './Logo';
+export * from './Modal';
 export * from './Pagination';
 export * from './RadioButton';
 export * from './RadioGroup';

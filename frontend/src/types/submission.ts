@@ -8,3 +8,14 @@ export interface Submission {
   financialYear: string;
   status: SubmissionStatus;
 }
+
+/** One row inside a submitted file, as shown in the Data Review details overlay. */
+export interface SubmissionRecord {
+  rowNumber: number;
+  programmeCode: string;
+  programmeName: string;
+  fullTimeHeadcount: number;
+  partTimeHeadcount: number;
+  rejectedBy: string;
+  reason: string;
+}

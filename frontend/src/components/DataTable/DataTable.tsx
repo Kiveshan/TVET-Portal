@@ -17,6 +17,8 @@ export interface DataTableProps<T> {
   columns: DataTableColumn<T>[];
   rows: T[];
   getRowKey: (row: T) => string;
+  /** Makes rows clickable (mouse, Enter or Space). */
+  onRowClick?: (row: T) => void;
   emptyMessage?: string;
   className?: string;
 }
@@ -26,6 +28,7 @@ export function DataTable<T>({
   columns,
   rows,
   getRowKey,
+  onRowClick,
   emptyMessage = 'No records found.',
   className,
 }: DataTableProps<T>) {
@@ -50,7 +53,22 @@ export function DataTable<T>({
             </tr>
           ) : (
             rows.map((row) => (
-              <tr key={getRowKey(row)}>
+              <tr
+                key={getRowKey(row)}
+                className={cn(onRowClick && styles.clickable)}
+                tabIndex={onRowClick ? 0 : undefined}
+                onClick={onRowClick ? () => onRowClick(row) : undefined}
+                onKeyDown={
+                  onRowClick
+                    ? (event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault();
+                          onRowClick(row);
+                        }
+                      }
+                    : undefined
+                }
+              >
                 {columns.map((column) => (
                   <td key={column.key} className={cn(column.emphasis && styles.emphasis)}>
                     {column.render

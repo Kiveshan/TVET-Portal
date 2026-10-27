@@ -6,20 +6,13 @@ import {
   StatusBadge,
   type DataTableColumn,
 } from '@/components';
+import { SUBMISSIONS } from '@/constants/mockSubmissions';
 import { DashboardLayout } from '@/layouts/DashboardLayout';
 import type { Submission } from '@/types/submission';
-import { SUBMISSIONS } from './dashboardData';
+import { formatDate } from '@/utils/formatDate';
 import styles from './DashboardPage.module.css';
 
 const PAGE_SIZE = 6;
-
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-/** '2026-10-09' -> '9 Oct 2026' */
-function formatDate(isoDate: string): string {
-  const [year, month, day] = isoDate.split('-').map(Number);
-  return `${day} ${MONTHS[month - 1]} ${year}`;
-}
 
 const COLUMNS: DataTableColumn<Submission>[] = [
   {
