@@ -36,7 +36,24 @@ import { Button, TextBox, Dropdown } from '@/components';
 
 ## Routes
 
-| Path        | Page                                                    |
-| ----------- | ------------------------------------------------------- |
-| `/login`    | Login                                                   |
-| `/register` | Registration (DHET / TVET toggle, confirm modal, toast) |
+| Path               | Page                                                    | Who          |
+| ------------------ | ------------------------------------------------------- | ------------ |
+| `/login`           | Login                                                   | Everyone     |
+| `/register`        | Registration (DHET / TVET toggle, confirm modal, toast) | Everyone     |
+| `/dashboard`       | Submissions dashboard                                   | TVET, DHET   |
+| `/admin/users`     | User management with filter cards                       | System Admin |
+| `/admin/users/:id` | User preview with Approve / Reject                      | System Admin |
+
+## Test logins
+
+Until the backend handles authentication, these accounts are defined in
+`src/constants/testUsers.ts`. All use the password `123456`.
+
+| Role         | Email                   | Lands on       |
+| ------------ | ----------------------- | -------------- |
+| TVET         | `tvet@tvetportal.test`  | `/dashboard`   |
+| DHET         | `dhet@tvetportal.test`  | `/dashboard`   |
+| System Admin | `admin@tvetportal.test` | `/admin/users` |
+
+User data on the System Admin pages is mock data from `src/services/userService.ts`;
+approvals and rejections reset when the page is reloaded.

@@ -31,6 +31,33 @@
   width: 100%;
 }
 
+/* Sizes (md keeps the auth-page sizing) */
+.sm {
+  min-height: 28px;
+  padding: 0 14px;
+  gap: 5px;
+  font-size: 12px;
+  border-radius: var(--radius-sm);
+}
+
+.lg {
+  min-height: 44px;
+  padding: 0 28px;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  border-radius: var(--radius-lg);
+}
+
+.solid {
+  color: var(--color-white);
+  background: var(--color-sidebar);
+}
+
+.solid.lg {
+  box-shadow: 0 8px 18px rgba(19, 88, 51, 0.25);
+}
+
 .primary {
   color: var(--color-white);
   background: var(--gradient-primary);
@@ -45,7 +72,11 @@
 
 .danger {
   color: var(--color-white);
-  background: #d64545;
+  background: #df3b40;
+}
+
+.danger.lg {
+  box-shadow: 0 8px 18px rgba(223, 59, 64, 0.22);
 }
 
 .spinner {

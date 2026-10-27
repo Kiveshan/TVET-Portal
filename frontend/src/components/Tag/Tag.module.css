@@ -1,0 +1,19 @@
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  border-radius: 999px;
+}
+
+.slate {
+  color: #1f2d3a;
+  background: #95aec4;
+}
+
+.mint {
+  color: var(--color-body);
+  background: #e6f4f1;
+}

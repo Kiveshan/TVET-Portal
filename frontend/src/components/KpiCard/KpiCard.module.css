@@ -19,6 +19,66 @@
   font-size: 12px;
 }
 
+/* Label-first layout with an icon (System Admin cards) */
+.withIcon {
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 16px 14px 16px 18px;
+  border-color: #e9ecef;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 2px 6px rgba(23, 26, 31, 0.06);
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.withIcon .label {
+  color: var(--color-body);
+  font-size: 13px;
+}
+
+.withIcon .value {
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.iconBox {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  color: var(--color-sidebar);
+  background: #fdf8ec;
+  border-radius: var(--radius-md);
+}
+
+/* Toggle card */
+.interactive {
+  width: 100%;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--transition-fast), box-shadow var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.interactive:hover {
+  box-shadow: 0 6px 14px rgba(23, 26, 31, 0.1);
+}
+
+.selected {
+  background: #eef2f4;
+  border-color: #cfd8dc;
+  box-shadow: inset 0 0 0 1px #cfd8dc;
+}
+
 .neutral {
   color: var(--color-body);
 }
