@@ -1,0 +1,47 @@
+.shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--color-app-bg);
+}
+
+.body {
+  display: flex;
+  flex: 1;
+}
+
+.content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.main {
+  flex: 1;
+  padding: 40px 28px;
+}
+
+/* Keeps content readable on wide screens instead of stretching edge to edge. */
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.footer {
+  padding: 16px;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  text-align: center;
+  border-top: 1px solid var(--color-border);
+}
+
+@media (max-width: 768px) {
+  .body {
+    flex-direction: column;
+  }
+
+  .main {
+    padding: 24px 16px;
+  }
+}

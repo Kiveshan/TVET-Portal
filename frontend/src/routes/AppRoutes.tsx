@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
+import { DashboardPage } from '@/pages/Dashboard/DashboardPage';
 import { LoginPage } from '@/pages/Login/LoginPage';
 import { RegisterPage } from '@/pages/Register/RegisterPage';
 
@@ -8,6 +9,7 @@ export function AppRoutes() {
       <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/dashboard" element={<DashboardPage />} />
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );

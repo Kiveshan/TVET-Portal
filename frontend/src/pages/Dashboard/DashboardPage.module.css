@@ -1,0 +1,55 @@
+.heading {
+  margin-bottom: 18px;
+}
+
+.title {
+  margin: 0 0 8px;
+  color: var(--color-body);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.subtitle {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+}
+
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.recent {
+  margin-top: 28px;
+}
+
+.sectionTitle {
+  margin: 0 0 14px;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.tableArea {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  /* Inset the table slightly from the KPI row, scaling with the width (as in the mockup). */
+  padding: 0 4%;
+}
+
+@media (max-width: 1024px) {
+  .kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .kpis {
+    grid-template-columns: 1fr;
+  }
+}

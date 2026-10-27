@@ -29,6 +29,23 @@
   --color-success-bg: #c8f0d8;
   --color-success: #1f9d55;
 
+  /* App shell (dashboard) */
+  --color-sidebar: #135833;
+  --color-sidebar-active: rgba(255, 255, 255, 0.28);
+  --color-sidebar-text: #a9d3bb;
+  --color-app-bg: #f1f4f7;
+  --color-table-head: #f4f6f8;
+  --color-text-secondary: #565e6c;
+
+  /* Status */
+  --color-status-pending: #f0bd45;
+  --color-status-pending-text: #5c4400;
+  --color-status-approved: #148a3f;
+  --color-status-rejected: #d22b2b;
+  --color-kpi-pending: #b7791f;
+  --color-kpi-approved: #148a3f;
+  --color-kpi-rejected: #d22b2b;
+
   /* Stripe (SA flag-inspired accent bar) */
   --stripe-red: #ea4335;
   --stripe-blue: #4285f4;
