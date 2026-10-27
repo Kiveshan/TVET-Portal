@@ -3,7 +3,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  height: 56px;
+  height: var(--control-height);
   padding: 0 16px;
   background: var(--color-input);
   border: 1px solid transparent;
@@ -40,7 +40,23 @@
   cursor: pointer;
 }
 
+/* The wrapper shows the focus ring, so hide the global outline on the inner select */
+.select:focus-visible {
+  outline: none;
+}
+
 .placeholder {
+  color: var(--color-placeholder);
+}
+
+/* Options inherit the select's colour, so set them explicitly to stay readable
+   (including when the OS renders the list in dark mode). */
+.select option {
+  color: var(--color-body);
+  background: var(--color-white);
+}
+
+.select option:disabled {
   color: var(--color-placeholder);
 }
 

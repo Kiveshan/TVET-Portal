@@ -57,11 +57,11 @@
 .segment {
   justify-content: center;
   min-width: 100px;
-  height: 52px;
+  height: var(--control-height);
   padding: 0 20px;
   border-radius: var(--radius-md);
   color: var(--color-white);
-  font-size: 18px;
+  font-size: clamp(16px, 1.8vh, 18px);
   font-weight: 600;
   transition: background var(--transition-fast), color var(--transition-fast);
 }
