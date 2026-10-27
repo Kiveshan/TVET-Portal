@@ -18,6 +18,8 @@ export interface DataTableProps<T> {
   rows: T[];
   getRowKey: (row: T) => string;
   emptyMessage?: string;
+  /** `compact` = small uppercase headers, `comfortable` = larger rows with striping. */
+  density?: 'compact' | 'comfortable';
   className?: string;
 }
 
@@ -27,10 +29,11 @@ export function DataTable<T>({
   rows,
   getRowKey,
   emptyMessage = 'No records found.',
+  density = 'compact',
   className,
 }: DataTableProps<T>) {
   return (
-    <div className={cn(styles.wrapper, className)}>
+    <div className={cn(styles.wrapper, styles[density], className)}>
       <table className={styles.table}>
         <thead>
           <tr>

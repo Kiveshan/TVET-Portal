@@ -8,17 +8,53 @@
   border-radius: 999px;
 }
 
-.awaiting {
+/* Solid */
+.solid.awaiting,
+.solid.pending {
   color: var(--color-status-pending-text);
   background: var(--color-status-pending);
 }
 
-.approved {
+.solid.approved {
   color: var(--color-white);
   background: var(--color-status-approved);
 }
 
-.rejected {
+.solid.rejected {
   color: var(--color-white);
   background: var(--color-status-rejected);
+}
+
+.solid.disabled {
+  color: var(--color-white);
+  background: var(--color-placeholder);
+}
+
+/* Soft */
+.soft {
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: 6px;
+}
+
+.soft.awaiting,
+.soft.pending {
+  color: #2a7fd4;
+  background: #e8f2fc;
+}
+
+.soft.approved {
+  color: #2f9e44;
+  background: #e8f6ea;
+}
+
+.soft.rejected {
+  color: #e03131;
+  background: #fde8e8;
+}
+
+.soft.disabled {
+  color: #868e96;
+  background: #f1f3f5;
 }
