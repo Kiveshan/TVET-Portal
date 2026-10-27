@@ -1,0 +1,39 @@
+.iconButton {
+  display: inline-grid;
+  place-items: center;
+  padding: 4px;
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.iconButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.danger {
+  color: #e03131;
+}
+
+.danger:hover:not(:disabled) {
+  background: #fde8e8;
+}
+
+.success {
+  color: #51cf66;
+}
+
+.success:hover:not(:disabled) {
+  background: #e8f6ea;
+}
+
+.neutral {
+  color: var(--color-text-secondary);
+}
+
+.neutral:hover:not(:disabled) {
+  background: var(--color-table-head);
+}

@@ -32,6 +32,15 @@
   gap: var(--space-md);
 }
 
+.formError {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: var(--space-sm) 0 calc(var(--space-sm) * -1);
+  color: #d64545;
+  font-size: 14px;
+}
+
 .submit {
   margin-top: var(--space-lg);
 }

@@ -20,6 +20,8 @@ export interface DataTableProps<T> {
   /** Makes rows clickable (mouse, Enter or Space). */
   onRowClick?: (row: T) => void;
   emptyMessage?: string;
+  /** `compact` = small uppercase headers, `comfortable` = larger rows with striping. */
+  density?: 'compact' | 'comfortable';
   className?: string;
 }
 
@@ -30,10 +32,11 @@ export function DataTable<T>({
   getRowKey,
   onRowClick,
   emptyMessage = 'No records found.',
+  density = 'compact',
   className,
 }: DataTableProps<T>) {
   return (
-    <div className={cn(styles.wrapper, className)}>
+    <div className={cn(styles.wrapper, styles[density], className)}>
       <table className={styles.table}>
         <thead>
           <tr>

@@ -9,7 +9,9 @@ export interface TopBarUser {
 
 export interface TopBarProps {
   title?: string;
-  institution: string;
+  institution?: string;
+  /** Highlighted label shown before the user, e.g. "System Admin". */
+  roleLabel?: string;
   user: TopBarUser;
   onLogout?: () => void;
 }
@@ -24,18 +26,25 @@ function getInitials(name: string): string {
 }
 
 /** Top application bar: logo, portal title, institution and signed-in user. */
-export function TopBar({ title = 'TVET Portal', institution, user, onLogout }: TopBarProps) {
+export function TopBar({
+  title = 'TVET Portal',
+  institution,
+  roleLabel,
+  user,
+  onLogout,
+}: TopBarProps) {
   return (
     <header className={styles.topBar}>
       <div className={styles.brand}>
         <Logo className={styles.logo} />
         <div className={styles.titles}>
           <span className={styles.title}>{title}</span>
-          <span className={styles.institution}>{institution}</span>
+          {institution && <span className={styles.institution}>{institution}</span>}
         </div>
       </div>
 
       <div className={styles.user}>
+        {roleLabel && <span className={styles.roleLabel}>{roleLabel}</span>}
         <span className={styles.avatar} aria-hidden="true">
           {getInitials(user.name)}
         </span>

@@ -1,7 +1,10 @@
 import { useState, type FormEvent } from 'react';
-import { Button, Card, ColorStripe, Divider, TextBox, TextLink } from '@/components';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Button, Card, ColorStripe, Divider, Icon, TextBox, TextLink } from '@/components';
+import { useAuth } from '@/hooks/useAuth';
 import { AuthLayout } from '@/layouts/AuthLayout';
-import { login } from '@/services/authService';
+import { homePathFor } from '@/routes/paths';
+import { InvalidCredentialsError, login } from '@/services/authService';
 import { isValidEmail } from '@/utils/validation';
 import styles from './LoginPage.module.css';
 
@@ -11,10 +14,17 @@ interface LoginErrors {
 }
 
 export function LoginPage() {
+  const { user, signIn } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<LoginErrors>({});
+  const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  // Already signed in: skip the form.
+  if (user) return <Navigate to={homePathFor(user.role)} replace />;
 
   const validate = (): LoginErrors => {
     const next: LoginErrors = {};
@@ -27,12 +37,19 @@ export function LoginPage() {
     event.preventDefault();
     const nextErrors = validate();
     setErrors(nextErrors);
+    setFormError(null);
     if (Object.keys(nextErrors).length > 0) return;
 
     setSubmitting(true);
     try {
-      await login({ email, password });
-    } finally {
+      const signedIn = await login({ email, password });
+      signIn(signedIn);
+      // Return to the page the user was sent away from, otherwise their role's home page.
+      const from = (location.state as { from?: string } | null)?.from;
+      navigate(from ?? homePathFor(signedIn.role), { replace: true });
+    } catch (error) {
+      if (!(error instanceof InvalidCredentialsError)) throw error;
+      setFormError(error.message);
       setSubmitting(false);
     }
   };
@@ -68,6 +85,13 @@ export function LoginPage() {
               error={errors.password}
             />
           </div>
+
+          {formError && (
+            <p className={styles.formError} role="alert">
+              <Icon name="alert" size={16} />
+              {formError}
+            </p>
+          )}
 
           <Button type="submit" fullWidth loading={submitting} className={styles.submit}>
             Sign in

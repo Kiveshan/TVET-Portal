@@ -47,6 +47,38 @@
   color: var(--color-body);
 }
 
+/* Comfortable density */
+.comfortable {
+  border-color: #e9ecef;
+  border-radius: var(--radius-lg);
+}
+
+.comfortable .table {
+  font-size: 13px;
+}
+
+.comfortable .table th {
+  padding: 13px 14px;
+  color: var(--color-body);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.comfortable .table td {
+  height: 48px;
+  padding: 7px 14px;
+}
+
+.comfortable .table tbody tr:nth-child(even) {
+  background: #fafbfc;
+}
+
+.comfortable .table tbody tr:hover {
+  background: var(--color-table-head);
+}
+
 .empty {
   text-align: center;
 }

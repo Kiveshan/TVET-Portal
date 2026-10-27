@@ -1,0 +1,87 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  max-width: 880px;
+  margin: 0 auto;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px 36px 32px;
+  background: var(--color-white);
+  border: 1.5px solid var(--color-gold-600);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 14px 32px rgba(23, 26, 31, 0.09);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.name {
+  margin: 0;
+  padding-left: 14px;
+  color: var(--color-body);
+  font-size: clamp(24px, 2.6vw, 34px);
+  font-weight: 800;
+  letter-spacing: -1px;
+  line-height: 1.15;
+  border-left: 5px solid var(--color-sidebar);
+}
+
+.details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin: 0;
+}
+
+/* The divider belongs to the button row, so it disappears once a decision is made. */
+.decision {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 20px;
+  border-top: 1px solid var(--color-border);
+}
+
+.decision button:first-child {
+  min-width: 200px;
+}
+
+.decision button:last-child {
+  min-width: 160px;
+}
+
+.back {
+  align-self: flex-start;
+  min-width: 140px;
+}
+
+.notFound {
+  margin: 0;
+  color: var(--color-text-secondary);
+}
+
+@media (max-width: 768px) {
+  .card {
+    padding: 18px;
+  }
+
+  .details {
+    grid-template-columns: 1fr;
+  }
+
+  .decision button:first-child,
+  .decision button:last-child {
+    flex: 1;
+    min-width: 0;
+  }
+}
