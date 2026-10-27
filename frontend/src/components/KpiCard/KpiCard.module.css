@@ -1,0 +1,36 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 18px 16px;
+  background: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.value {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.label {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+}
+
+.neutral {
+  color: var(--color-body);
+}
+
+.pending {
+  color: var(--color-kpi-pending);
+}
+
+.approved {
+  color: var(--color-kpi-approved);
+}
+
+.rejected {
+  color: var(--color-kpi-rejected);
+}

@@ -1,0 +1,24 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  font-size: 9px;
+  font-weight: 700;
+  white-space: nowrap;
+  border-radius: 999px;
+}
+
+.awaiting {
+  color: var(--color-status-pending-text);
+  background: var(--color-status-pending);
+}
+
+.approved {
+  color: var(--color-white);
+  background: var(--color-status-approved);
+}
+
+.rejected {
+  color: var(--color-white);
+  background: var(--color-status-rejected);
+}

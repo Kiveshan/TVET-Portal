@@ -1,0 +1,68 @@
+import type { ReactNode } from 'react';
+import { cn } from '@/utils/classNames';
+import styles from './DataTable.module.css';
+
+export interface DataTableColumn<T> {
+  key: string;
+  header: string;
+  /** Custom cell renderer; defaults to `row[key]`. */
+  render?: (row: T) => ReactNode;
+  /** Relative column width, e.g. '20%'. */
+  width?: string;
+  /** Use stronger text for this column. */
+  emphasis?: boolean;
+}
+
+export interface DataTableProps<T> {
+  columns: DataTableColumn<T>[];
+  rows: T[];
+  getRowKey: (row: T) => string;
+  emptyMessage?: string;
+  className?: string;
+}
+
+/** Generic, column-driven table used for lists of records. */
+export function DataTable<T>({
+  columns,
+  rows,
+  getRowKey,
+  emptyMessage = 'No records found.',
+  className,
+}: DataTableProps<T>) {
+  return (
+    <div className={cn(styles.wrapper, className)}>
+      <table className={styles.table}>
+        <thead>
+          <tr>
+            {columns.map((column) => (
+              <th key={column.key} scope="col" style={{ width: column.width }}>
+                {column.header}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.length === 0 ? (
+            <tr>
+              <td colSpan={columns.length} className={styles.empty}>
+                {emptyMessage}
+              </td>
+            </tr>
+          ) : (
+            rows.map((row) => (
+              <tr key={getRowKey(row)}>
+                {columns.map((column) => (
+                  <td key={column.key} className={cn(column.emphasis && styles.emphasis)}>
+                    {column.render
+                      ? column.render(row)
+                      : String((row as Record<string, unknown>)[column.key] ?? '')}
+                  </td>
+                ))}
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+}

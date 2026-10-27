@@ -1,0 +1,98 @@
+.topBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  height: 52px;
+  padding: 0 16px 0 6px;
+  background: var(--color-white);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.logo {
+  width: 90px;
+  height: 44px;
+  padding: 2px;
+}
+
+.titles {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.title {
+  color: var(--color-body);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.institution {
+  color: var(--color-gold-500);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  color: var(--color-white);
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--color-sidebar);
+  border-radius: 50%;
+}
+
+.userText {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.userName {
+  color: var(--color-body);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.userRole {
+  color: var(--color-text-secondary);
+  font-size: 9px;
+}
+
+.logout {
+  display: grid;
+  place-items: center;
+  margin-left: 10px;
+  padding: 4px;
+  color: var(--color-status-rejected);
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.logout:hover {
+  background: rgba(210, 43, 43, 0.08);
+}
+
+@media (max-width: 640px) {
+  .userText {
+    display: none;
+  }
+}

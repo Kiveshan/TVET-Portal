@@ -12,7 +12,10 @@ export type IconName =
   | 'check'
   | 'close'
   | 'chevronDown'
-  | 'building';
+  | 'building'
+  | 'dashboard'
+  | 'database'
+  | 'logout';
 
 export interface IconProps extends Omit<SVGProps<SVGSVGElement>, 'name'> {
   name: IconName;
@@ -77,6 +80,27 @@ const paths: Record<IconName, ReactNode> = {
     <>
       <path d="M4 21V7l8-4 8 4v14" />
       <path d="M9 21v-5h6v5M8 10h.01M12 10h.01M16 10h.01" />
+    </>
+  ),
+  dashboard: (
+    <>
+      <rect x="4" y="4" width="6" height="7" rx="1" />
+      <rect x="14" y="4" width="6" height="4" rx="1" />
+      <rect x="14" y="12" width="6" height="8" rx="1" />
+      <rect x="4" y="15" width="6" height="5" rx="1" />
+    </>
+  ),
+  database: (
+    <>
+      <ellipse cx="12" cy="5.5" rx="7.5" ry="2.5" />
+      <path d="M4.5 5.5v13c0 1.4 3.4 2.5 7.5 2.5s7.5-1.1 7.5-2.5v-13" />
+      <path d="M4.5 12c0 1.4 3.4 2.5 7.5 2.5s7.5-1.1 7.5-2.5" />
+    </>
+  ),
+  logout: (
+    <>
+      <path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4" />
+      <path d="M10 8 6 12l4 4M6 12h10" />
     </>
   ),
 };
