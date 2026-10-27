@@ -1,0 +1,82 @@
+.radio {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+/* Default: classic radio circle */
+.default {
+  color: var(--color-label);
+  font-size: 15px;
+}
+
+.dot {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--color-placeholder);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  transition: border-color var(--transition-fast);
+}
+
+.dot::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-green-700);
+  transform: scale(0);
+  transition: transform var(--transition-fast);
+}
+
+.input:checked + .dot {
+  border-color: var(--color-green-700);
+}
+
+.input:checked + .dot::after {
+  transform: scale(1);
+}
+
+.input:focus-visible + .dot {
+  outline: 2px solid var(--color-green-700);
+  outline-offset: 2px;
+}
+
+/* Segment: one pill of a segmented toggle */
+.segment {
+  justify-content: center;
+  min-width: 100px;
+  height: 52px;
+  padding: 0 20px;
+  border-radius: var(--radius-md);
+  color: var(--color-white);
+  font-size: 18px;
+  font-weight: 600;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.segment:has(.input:checked) {
+  background: var(--color-white);
+  color: var(--color-label);
+  font-weight: 500;
+}
+
+.segment:has(.input:focus-visible) {
+  outline: 2px solid var(--color-gold-500);
+  outline-offset: 1px;
+}
+
+.input:disabled ~ .text {
+  opacity: 0.5;
+}

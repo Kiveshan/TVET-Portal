@@ -1,0 +1,19 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.message {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: -4px 0 0 4px;
+  font-size: 12px;
+  color: var(--color-error);
+}
+
+.error {
+  color: #d64545;
+}

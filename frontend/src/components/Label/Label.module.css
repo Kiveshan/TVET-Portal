@@ -1,0 +1,20 @@
+.label {
+  display: inline-block;
+  color: var(--color-label);
+  font-weight: 600;
+}
+
+.sm {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-muted);
+}
+
+.md {
+  font-size: 16px;
+}
+
+.required {
+  color: var(--color-required);
+  margin-left: 1px;
+}

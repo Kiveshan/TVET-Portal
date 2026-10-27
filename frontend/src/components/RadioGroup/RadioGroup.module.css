@@ -1,0 +1,24 @@
+.group {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px 36px;
+}
+
+.label {
+  color: var(--color-label);
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.options {
+  display: inline-flex;
+  gap: 20px;
+}
+
+.segmented {
+  gap: 4px;
+  padding: 4px;
+  background: var(--color-green-900);
+  border-radius: var(--radius-lg);
+}
