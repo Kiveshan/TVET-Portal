@@ -3,8 +3,11 @@ import { cn } from '@/utils/classNames';
 import { Icon, type IconName } from '../Icon';
 import styles from './Button.module.css';
 
-/** `primary` = green gradient (auth pages), `solid` = flat dark green (app pages). */
-export type ButtonVariant = 'primary' | 'solid' | 'secondary' | 'danger';
+/**
+ * `primary` = green gradient (auth pages), `solid` = flat dark green (app pages),
+ * `accent` = gold (e.g. Download File in Data Review), `navy` = dark blue (review confirmations).
+ */
+export type ButtonVariant = 'primary' | 'solid' | 'secondary' | 'danger' | 'accent' | 'navy';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {

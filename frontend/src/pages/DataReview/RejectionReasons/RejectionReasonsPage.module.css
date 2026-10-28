@@ -1,0 +1,112 @@
+.muted {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+}
+
+.error {
+  margin: 0;
+  color: var(--color-status-rejected);
+  font-size: 12px;
+}
+
+.section {
+  margin-top: 24px;
+}
+
+/* Card restyled to the flat, bordered panels used across the app pages */
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 20px 18px;
+  background: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+/* Scrolls both ways; header stays visible while scrolling down */
+.rowsTable {
+  max-height: min(420px, 60vh);
+  overflow: auto;
+}
+
+.rowsTable thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+/* Last column: the reason input, pinned to the right so it stays visible while scrolling sideways */
+.rowsTable th:last-child,
+.rowsTable td:last-child {
+  position: sticky;
+  right: 0;
+  background: var(--color-white);
+  box-shadow: -8px 0 8px -8px rgba(23, 26, 31, 0.18);
+}
+
+.rowsTable thead th:last-child {
+  z-index: 2;
+  color: var(--color-body);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  background: var(--color-table-head);
+}
+
+.rowsTable thead th:last-child::after {
+  content: ' *';
+  color: var(--color-status-rejected);
+}
+
+.reasonField {
+  --control-height: 26px;
+  --field-gap: 2px;
+  width: 180px;
+}
+
+.reasonField input {
+  font-size: 11px;
+}
+
+.reasonField > div {
+  padding: 0 8px;
+  background: var(--color-white);
+  border-color: var(--color-border);
+  box-shadow: none;
+}
+
+.reasonField p {
+  font-size: 10px;
+}
+
+.progress {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 11px;
+}
+
+.missing {
+  color: var(--color-status-rejected);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+@media (max-width: 480px) {
+  .actions {
+    flex-direction: column-reverse;
+  }
+}

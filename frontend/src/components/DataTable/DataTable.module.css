@@ -43,6 +43,15 @@
   outline-offset: -2px;
 }
 
+.table .selectCell {
+  width: 1%;
+  padding-right: 4px;
+}
+
+.table tbody tr.selected {
+  background: rgba(20, 138, 63, 0.06);
+}
+
 .table td.emphasis {
   color: var(--color-body);
 }

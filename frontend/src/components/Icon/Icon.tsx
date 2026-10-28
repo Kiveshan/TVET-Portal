@@ -21,6 +21,7 @@ export type IconName =
   | 'tick'
   | 'xCircle'
   | 'arrowLeft'
+  | 'arrowRight'
   | 'briefcase';
 
 export interface IconProps extends Omit<SVGProps<SVGSVGElement>, 'name'> {
@@ -130,6 +131,7 @@ const paths: Record<IconName, ReactNode> = {
     </>
   ),
   arrowLeft: <path d="M19 12H5M11 6l-6 6 6 6" />,
+  arrowRight: <path d="M5 12h14M13 6l6 6-6 6" />,
   briefcase: (
     <>
       <rect x="3" y="7" width="18" height="13" rx="2" />

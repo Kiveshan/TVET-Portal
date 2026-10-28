@@ -33,7 +33,7 @@
 
 /* Sizes (md keeps the auth-page sizing) */
 .sm {
-  min-height: 28px;
+  min-height: 30px;
   padding: 0 14px;
   gap: 5px;
   font-size: 12px;
@@ -70,6 +70,11 @@
   border: 1px solid var(--color-border);
 }
 
+.navy {
+  color: var(--color-white);
+  background: var(--color-navy-800);
+}
+
 .accent {
   color: var(--color-body);
   background: var(--color-status-pending);
@@ -82,13 +87,6 @@
 
 .danger.lg {
   box-shadow: 0 8px 18px rgba(223, 59, 64, 0.22);
-}
-
-.sm {
-  min-height: 30px;
-  padding: 0 14px;
-  font-size: 12px;
-  border-radius: var(--radius-sm);
 }
 
 .spinner {

@@ -3,6 +3,8 @@ import { UserPreviewPage } from '@/pages/Admin/UserPreview/UserPreviewPage';
 import { UsersPage } from '@/pages/Admin/Users/UsersPage';
 import { DashboardPage } from '@/pages/Dashboard/DashboardPage';
 import { DataReviewPage } from '@/pages/DataReview/DataReviewPage';
+import { RejectionReasonsPage } from '@/pages/DataReview/RejectionReasons/RejectionReasonsPage';
+import { SubmissionDetailPage } from '@/pages/DataReview/SubmissionDetail/SubmissionDetailPage';
 import { LoginPage } from '@/pages/Login/LoginPage';
 import { RegisterPage } from '@/pages/Register/RegisterPage';
 import { PATHS } from './paths';
@@ -22,7 +24,30 @@ export function AppRoutes() {
           </ProtectedRoute>
         }
       />
-      <Route path="/data-review" element={<DataReviewPage />} />
+      <Route
+        path={PATHS.dataReview}
+        element={
+          <ProtectedRoute roles={['TVET', 'DHET']}>
+            <DataReviewPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={PATHS.dataReviewSubmission(':submissionId')}
+        element={
+          <ProtectedRoute roles={['DHET']}>
+            <SubmissionDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={PATHS.dataReviewRejection(':submissionId')}
+        element={
+          <ProtectedRoute roles={['DHET']}>
+            <RejectionReasonsPage />
+          </ProtectedRoute>
+        }
+      />
       <Route path="/admin" element={<Navigate to={PATHS.adminUsers} replace />} />
       <Route
         path={PATHS.adminUsers}
