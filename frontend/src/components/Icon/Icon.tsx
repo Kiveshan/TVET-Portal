@@ -12,6 +12,7 @@ export type IconName =
   | 'check'
   | 'close'
   | 'chevronDown'
+  | 'panelLeft'
   | 'building'
   | 'dashboard'
   | 'database'
@@ -83,6 +84,12 @@ const paths: Record<IconName, ReactNode> = {
   ),
   close: <path d="M6 6l12 12M18 6 6 18" />,
   chevronDown: <path d="m6 9 6 6 6-6" />,
+  panelLeft: (
+    <>
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <path d="M9 4v16" />
+    </>
+  ),
   building: (
     <>
       <path d="M4 21V7l8-4 8 4v14" />

@@ -116,13 +116,23 @@ const RECORD_COLUMNS: DataTableColumn<SubmissionRecord>[] = [
   { key: 'reason', header: 'Reason' },
 ];
 
+/** Only shown for rejected submissions; meaningless while awaiting or once approved. */
+const REJECTION_ONLY_KEYS = new Set(['rowNumber', 'rejectedBy', 'reason']);
+
+function recordColumnsFor(submission: Submission): DataTableColumn<SubmissionRecord>[] {
+  return submission.status === 'rejected'
+    ? RECORD_COLUMNS
+    : RECORD_COLUMNS.filter((column) => !REJECTION_ONLY_KEYS.has(column.key));
+}
+
 function downloadRecords(submission: Submission, records: SubmissionRecord[]) {
   const baseName = submission.fileName.replace(/\.[^.]+$/, '');
+  const columns = recordColumnsFor(submission);
   downloadCsv(
     `${baseName}-review.csv`,
-    RECORD_COLUMNS.map((column) => column.header),
+    columns.map((column) => column.header),
     records.map((record) =>
-      RECORD_COLUMNS.map((column) => record[column.key as keyof SubmissionRecord]),
+      columns.map((column) => record[column.key as keyof SubmissionRecord]),
     ),
   );
 }
@@ -258,7 +268,7 @@ export function DataReviewPage() {
               Download File
             </Button>
             <DataTable
-              columns={RECORD_COLUMNS}
+              columns={recordColumnsFor(selected)}
               rows={selectedRecords}
               getRowKey={(row) => String(row.rowNumber)}
               className={styles.recordsTable}

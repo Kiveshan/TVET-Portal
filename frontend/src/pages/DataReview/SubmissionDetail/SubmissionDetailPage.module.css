@@ -66,6 +66,15 @@
   z-index: 1;
 }
 
+/* After an all-approved submit: ticks stay visible but can't be changed */
+.locked tbody input[type='checkbox'] + span {
+  opacity: 0.6;
+}
+
+.locked tbody label {
+  pointer-events: none;
+}
+
 .selectionNote {
   display: flex;
   align-items: center;
