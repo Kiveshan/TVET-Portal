@@ -93,7 +93,7 @@ export function RegisterPage() {
 
   return (
     <AuthLayout>
-      <Card width={892} className={styles.card}>
+      <Card className={styles.card}>
         <form className={styles.form} onSubmit={handleSubmit} noValidate>
           <div className={styles.heading}>
             <h1 className={styles.title}>Registration details</h1>

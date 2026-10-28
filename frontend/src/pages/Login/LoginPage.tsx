@@ -56,7 +56,7 @@ export function LoginPage() {
 
   return (
     <AuthLayout>
-      <Card width={760} className={styles.card}>
+      <Card className={styles.card}>
         <form className={styles.form} onSubmit={handleSubmit} noValidate>
           <div className={styles.heading}>
             <h1 className={styles.title}>Login</h1>
