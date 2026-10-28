@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sidebar, TopBar, type SidebarItem } from '@/components';
 import { useAuth } from '@/hooks/useAuth';
+import { useSidebarCollapsed } from '@/hooks/useSidebarCollapsed';
 import { PATHS } from '@/routes/paths';
 import type { UserRole } from '@/types/auth';
 import styles from './DashboardLayout.module.css';
@@ -31,6 +32,7 @@ export interface DashboardLayoutProps {
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
+  const [sidebarCollapsed, toggleSidebar] = useSidebarCollapsed();
 
   // Routes using this layout are wrapped in ProtectedRoute, so a user is always present.
   if (!user) return null;
@@ -51,12 +53,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         onLogout={handleLogout}
       />
       <div className={styles.body}>
-        {navItems.length > 0 && <Sidebar items={navItems} />}
+        {navItems.length > 0 && (
+          <Sidebar items={navItems} collapsed={sidebarCollapsed} onToggle={toggleSidebar} />
+        )}
         <div className={styles.content}>
           <main className={styles.main}>
             <div className={styles.container}>{children}</div>
           </main>
-          <footer className={styles.footer}>© {new Date().getFullYear()} TVETMIS</footer>
+          <footer className={styles.footer}>© {new Date().getFullYear()} TVET Portal</footer>
         </div>
       </div>
     </div>

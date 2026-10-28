@@ -1,10 +1,15 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { Button, Card, Checkbox, DataTable, Icon, Modal } from '@/components';
+import { Button, Card, Checkbox, DataTable, Icon, Modal, Toast } from '@/components';
 import { useAsync } from '@/hooks/useAsync';
 import { DashboardLayout } from '@/layouts/DashboardLayout';
 import { PATHS } from '@/routes/paths';
-import { getFileRows, getSubmission, listSubmissionFiles } from '@/services/submissionService';
+import {
+  getFileRows,
+  getSubmission,
+  listSubmissionFiles,
+  submitFileReview,
+} from '@/services/submissionService';
 import type { ReviewSelectionState } from '@/types/submission';
 import { cn } from '@/utils/classNames';
 import { downloadTable, toColumns } from './fileTable';
@@ -28,6 +33,11 @@ export function SubmissionDetailPage() {
     returning ? { fileId: returning.fileId, keys: new Set(returning.approvedRowIds) } : null,
   );
   const [confirming, setConfirming] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  // A file whose rows were all approved and submitted here (no rejection step needed).
+  const [approvedFileId, setApprovedFileId] = useState<string | null>(null);
+  const [toastOpen, setToastOpen] = useState(false);
+  const closeToast = useCallback(() => setToastOpen(false), []);
 
   const submission = useAsync(submissionId, () => getSubmission(submissionId));
   const files = useAsync(submissionId, () => listSubmissionFiles(submissionId));
@@ -61,14 +71,35 @@ export function SubmissionDetailPage() {
   const total = rows?.total ?? 0;
   const approvedCount = selectedKeys.size;
   const remaining = total - approvedCount;
+  const allApproved = total > 0 && remaining === 0;
+  // Once submitted, the file's ticks and actions are locked.
+  const locked = approvedFileId !== null && approvedFileId === fileId;
 
-  const setSelectedKeys = (keys: Set<string>) => setSelection({ fileId, keys });
+  const setSelectedKeys = (keys: Set<string>) => {
+    if (!locked) setSelection({ fileId, keys });
+  };
   const toggleAll = (checked: boolean) =>
     setSelectedKeys(checked ? new Set(rows?.rows.map((row) => row.rowId)) : new Set());
 
   const goToRejection = () => {
     const state: ReviewSelectionState = { fileId, approvedRowIds: [...selectedKeys] };
     navigate(PATHS.dataReviewRejection(submissionId), { state });
+  };
+
+  // Every row approved: nothing to reject, so submit straight from here.
+  const submitApproval = async () => {
+    setSubmitting(true);
+    try {
+      await submitFileReview(submissionId, fileId, {
+        approvedRowIds: [...selectedKeys],
+        rejections: [],
+      });
+      setConfirming(false);
+      setApprovedFileId(fileId);
+      setToastOpen(true);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -84,7 +115,7 @@ export function SubmissionDetailPage() {
         <FilePicker files={files.data} value={fileId} onChange={setFileId} />
 
         {fileId && (
-          <Card className={cn(styles.panel, styles.preview)}>
+          <Card className={cn(styles.panel, styles.preview, locked && styles.locked)}>
             {table.loading && <p className={styles.muted}>Loading rows…</p>}
             {table.error && <p className={styles.error}>Could not load this file.</p>}
             {rows && (
@@ -94,6 +125,7 @@ export function SubmissionDetailPage() {
                   checked={total > 0 && approvedCount === total}
                   indeterminate={approvedCount > 0 && approvedCount < total}
                   onChange={(e) => toggleAll(e.target.checked)}
+                  disabled={locked}
                   className={styles.approveAll}
                 />
                 <DataTable
@@ -115,7 +147,7 @@ export function SubmissionDetailPage() {
           </Card>
         )}
 
-        {rows && (
+        {rows && !locked && (
           <div className={styles.actions}>
             <Button
               variant="secondary"
@@ -130,10 +162,10 @@ export function SubmissionDetailPage() {
               variant="navy"
               size="sm"
               icon="arrowRight"
-              disabled={remaining === 0}
+              disabled={total === 0}
               onClick={() => setConfirming(true)}
             >
-              Continue to Rejection
+              {allApproved ? 'Continue' : 'Continue to Rejection'}
             </Button>
           </div>
         )}
@@ -163,11 +195,18 @@ export function SubmissionDetailPage() {
             <Icon name="alert" size={34} strokeWidth={1.5} />
           </span>
           <h2 className={styles.confirmTitle}>Confirm Your Selection</h2>
-          <p className={styles.confirmText}>
-            You have selected <strong>{approvedCount} rows</strong> for approval. The remaining{' '}
-            {remaining} <strong>rows</strong> will require rejection reasons before the decision
-            can be finalised.
-          </p>
+          {allApproved ? (
+            <p className={styles.confirmText}>
+              You have selected all <strong>{approvedCount} rows</strong> for approval. No rows
+              will be rejected, so the decision will be finalised now.
+            </p>
+          ) : (
+            <p className={styles.confirmText}>
+              You have selected <strong>{approvedCount} rows</strong> for approval. The remaining{' '}
+              {remaining} <strong>rows</strong> will require rejection reasons before the decision
+              can be finalised.
+            </p>
+          )}
           <p className={styles.confirmQuestion}>Do you want to continue?</p>
           <div className={styles.confirmActions}>
             <Button
@@ -178,12 +217,25 @@ export function SubmissionDetailPage() {
             >
               Review Selection
             </Button>
-            <Button variant="navy" size="sm" onClick={goToRejection}>
-              Continue to Rejections
-            </Button>
+            {allApproved ? (
+              <Button variant="navy" size="sm" loading={submitting} onClick={submitApproval}>
+                Confirm and Submit
+              </Button>
+            ) : (
+              <Button variant="navy" size="sm" onClick={goToRejection}>
+                Continue to Rejections
+              </Button>
+            )}
           </div>
         </div>
       </Modal>
+
+      <Toast
+        open={toastOpen}
+        title="Approval Successful"
+        message={`${approvedCount}/${total} rows have been approved successfully`}
+        onClose={closeToast}
+      />
     </DashboardLayout>
   );
 }

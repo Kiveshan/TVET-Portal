@@ -5,6 +5,8 @@ import {
   Pagination,
   StatusBadge,
   type DataTableColumn,
+  type KpiTone,
+  type SubmissionStatus,
 } from '@/components';
 import { SUBMISSIONS } from '@/constants/mockSubmissions';
 import { DashboardLayout } from '@/layouts/DashboardLayout';
@@ -30,13 +32,38 @@ const COLUMNS: DataTableColumn<Submission>[] = [
   },
 ];
 
+type StatusFilter = SubmissionStatus | 'all';
+
+interface KpiFilter {
+  id: StatusFilter;
+  label: string;
+  tone: KpiTone;
+}
+
+/** Each card counts its status and, when clicked, filters the table to it. */
+const KPI_FILTERS: KpiFilter[] = [
+  { id: 'all', label: 'Total Submissions', tone: 'neutral' },
+  { id: 'awaiting', label: 'Awaiting Approval', tone: 'pending' },
+  { id: 'approved', label: 'Approved', tone: 'approved' },
+  { id: 'rejected', label: 'Rejected', tone: 'rejected' },
+];
+
+const matches = (filter: StatusFilter) => (submission: Submission) =>
+  filter === 'all' || submission.status === filter;
+
 export function DashboardPage() {
   const [page, setPage] = useState(1);
+  const [activeFilter, setActiveFilter] = useState<StatusFilter>('all');
 
-  const totalPages = Math.ceil(SUBMISSIONS.length / PAGE_SIZE);
-  const pageRows = SUBMISSIONS.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-  const countBy = (status: Submission['status']) =>
-    SUBMISSIONS.filter((submission) => submission.status === status).length;
+  const filtered = SUBMISSIONS.filter(matches(activeFilter));
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const pageRows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  // Clicking the active card again goes back to all submissions.
+  const toggleFilter = (filter: StatusFilter) => {
+    setActiveFilter((current) => (current === filter ? 'all' : filter));
+    setPage(1);
+  };
 
   return (
     <DashboardLayout>
@@ -47,17 +74,28 @@ export function DashboardPage() {
         </p>
       </div>
 
-      <section className={styles.kpis} aria-label="Submission summary">
-        <KpiCard value={SUBMISSIONS.length} label="Total Submissions" />
-        <KpiCard value={countBy('awaiting')} label="Awaiting Approval" tone="pending" />
-        <KpiCard value={countBy('approved')} label="Approved" tone="approved" />
-        <KpiCard value={countBy('rejected')} label="Rejected" tone="rejected" />
+      <section className={styles.kpis} aria-label="Filter submissions by status">
+        {KPI_FILTERS.map((filter) => (
+          <KpiCard
+            key={filter.id}
+            value={SUBMISSIONS.filter(matches(filter.id)).length}
+            label={filter.label}
+            tone={filter.tone}
+            selected={activeFilter === filter.id}
+            onClick={() => toggleFilter(filter.id)}
+          />
+        ))}
       </section>
 
       <section className={styles.recent}>
         <h2 className={styles.sectionTitle}>Recent Submissions</h2>
         <div className={styles.tableArea}>
-          <DataTable columns={COLUMNS} rows={pageRows} getRowKey={(row) => row.id} />
+          <DataTable
+            columns={COLUMNS}
+            rows={pageRows}
+            getRowKey={(row) => row.id}
+            emptyMessage="No submissions with this status."
+          />
           <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
         </div>
       </section>
