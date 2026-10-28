@@ -1,12 +1,21 @@
+/* Square card as in the design (760 × 760 at 1080p). The width follows the viewport
+   height so the card stays square and still fits on one screen. If the content needs
+   more room (e.g. error messages) the card grows taller instead of clipping. */
 .card {
-  padding-top: clamp(28px, 6vh, 88px);
-  padding-bottom: clamp(28px, 6vh, 88px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: clamp(320px, 72vh, 760px);
+  max-width: 100%;
+  aspect-ratio: 1;
+  padding: clamp(24px, 4vh, 56px) clamp(24px, 4vw, 56px);
 }
 
 .form {
   display: flex;
   flex-direction: column;
-  max-width: 460px;
+  width: 100%;
+  max-width: min(460px, 82%);
   margin: 0 auto;
 }
 
@@ -57,6 +66,14 @@
 }
 
 @media (max-width: 640px) {
+  .card {
+    aspect-ratio: auto;
+  }
+
+  .form {
+    max-width: none;
+  }
+
   .heading {
     margin: 0 0 var(--space-lg);
   }
