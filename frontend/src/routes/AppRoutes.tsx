@@ -2,6 +2,9 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { UserPreviewPage } from '@/pages/Admin/UserPreview/UserPreviewPage';
 import { UsersPage } from '@/pages/Admin/Users/UsersPage';
 import { DashboardPage } from '@/pages/Dashboard/DashboardPage';
+import { DataReviewPage } from '@/pages/DataReview/DataReviewPage';
+import { RejectionReasonsPage } from '@/pages/DataReview/RejectionReasons/RejectionReasonsPage';
+import { SubmissionDetailPage } from '@/pages/DataReview/SubmissionDetail/SubmissionDetailPage';
 import { LoginPage } from '@/pages/Login/LoginPage';
 import { RegisterPage } from '@/pages/Register/RegisterPage';
 import { PATHS } from './paths';
@@ -18,6 +21,30 @@ export function AppRoutes() {
         element={
           <ProtectedRoute roles={['TVET', 'DHET']}>
             <DashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={PATHS.dataReview}
+        element={
+          <ProtectedRoute roles={['TVET', 'DHET']}>
+            <DataReviewPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={PATHS.dataReviewSubmission(':submissionId')}
+        element={
+          <ProtectedRoute roles={['DHET']}>
+            <SubmissionDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={PATHS.dataReviewRejection(':submissionId')}
+        element={
+          <ProtectedRoute roles={['DHET']}>
+            <RejectionReasonsPage />
           </ProtectedRoute>
         }
       />

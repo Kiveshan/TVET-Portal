@@ -46,6 +46,12 @@
   --color-kpi-approved: #148a3f;
   --color-kpi-rejected: #d22b2b;
 
+  /* Navy (review confirmations) */
+  --color-navy-800: #1a3a7c;
+  --color-navy-600: #2c4d8e;
+  --color-navy-muted: #6b7895;
+  --color-backdrop: rgba(110, 116, 128, 0.45);
+
   /* Stripe (SA flag-inspired accent bar) */
   --stripe-red: #ea4335;
   --stripe-blue: #4285f4;

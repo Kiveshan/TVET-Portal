@@ -1,0 +1,65 @@
+.checkbox {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-body);
+  font-size: 12px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.box {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 15px;
+  height: 15px;
+  color: var(--color-white);
+  background: var(--color-white);
+  border: 1.5px solid var(--color-placeholder);
+  border-radius: 3px;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+}
+
+.tick,
+.dash {
+  grid-area: 1 / 1;
+  opacity: 0;
+}
+
+.dash {
+  width: 7px;
+  height: 2px;
+  background: currentColor;
+  border-radius: 1px;
+}
+
+.input:checked + .box,
+.input:indeterminate + .box {
+  background: var(--color-sidebar);
+  border-color: var(--color-sidebar);
+}
+
+.input:checked + .box .tick,
+.input:indeterminate:not(:checked) + .box .dash {
+  opacity: 1;
+}
+
+.input:focus-visible + .box {
+  outline: 2px solid var(--color-green-700);
+  outline-offset: 2px;
+}
+
+.input:disabled + .box,
+.input:disabled ~ .text {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

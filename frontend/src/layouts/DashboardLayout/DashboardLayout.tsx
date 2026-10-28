@@ -9,11 +9,11 @@ import styles from './DashboardLayout.module.css';
 const NAV_ITEMS: Record<UserRole, SidebarItem[]> = {
   TVET: [
     { label: 'Dashboard', to: PATHS.dashboard, icon: 'dashboard' },
-    { label: 'Data Review', to: '/data-review', icon: 'database' },
+    { label: 'Data Review', to: PATHS.dataReview, icon: 'database' },
   ],
   DHET: [
     { label: 'Dashboard', to: PATHS.dashboard, icon: 'dashboard' },
-    { label: 'Data Review', to: '/data-review', icon: 'database' },
+    { label: 'Data Review', to: PATHS.dataReview, icon: 'database' },
   ],
   // The System Admin views have no side navigation.
   SYSTEM_ADMIN: [],

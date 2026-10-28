@@ -4,6 +4,9 @@ export const PATHS = {
   login: '/login',
   register: '/register',
   dashboard: '/dashboard',
+  dataReview: '/data-review',
+  dataReviewSubmission: (id: string) => `/data-review/${id}`,
+  dataReviewRejection: (id: string) => `/data-review/${id}/reject`,
   adminUsers: '/admin/users',
   adminUser: (id: string) => `/admin/users/${id}`,
 } as const;

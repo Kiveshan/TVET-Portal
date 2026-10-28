@@ -1,0 +1,112 @@
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 14px;
+  color: var(--color-body);
+  font-size: 12px;
+}
+
+.titleRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.title {
+  margin: 0;
+  color: var(--color-body);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.download {
+  margin-bottom: 16px;
+}
+
+/* Card restyled to the flat, bordered panels used across the app pages */
+.panel {
+  padding: 16px 14px;
+  background: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.details {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px 24px;
+  margin: 0;
+}
+
+/* DetailTile without its own border, as plain label/value pairs */
+.detail {
+  gap: 4px;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+}
+
+.detail dt {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+.detail dd {
+  font-size: 12px;
+  font-weight: 400;
+}
+
+@media (max-width: 768px) {
+  .details {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .details {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sectionTitle {
+  margin: 0;
+  color: var(--color-body);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.sectionHint {
+  margin: 2px 0 10px;
+  color: var(--color-text-secondary);
+  font-size: 11px;
+}
+
+/* Full-width, compact version of the shared Dropdown */
+.filePicker {
+  --control-height: 32px;
+}
+
+.filePicker > div {
+  padding: 0 12px;
+  background: var(--color-white);
+  border-color: var(--color-border);
+  box-shadow: none;
+}
+
+.filePicker select {
+  font-size: 12px;
+}
+
+.filePicker select:disabled {
+  cursor: default;
+}
+
+.filePicker svg {
+  right: 12px;
+}

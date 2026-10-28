@@ -1,6 +1,7 @@
 // Barrel file: import any UI component from '@/components'
 export * from './Button';
 export * from './Card';
+export * from './Checkbox';
 export * from './ColorStripe';
 export * from './ConfirmationModal';
 export * from './DataTable';
@@ -15,6 +16,7 @@ export * from './IconButton';
 export * from './KpiCard';
 export * from './Label';
 export * from './Logo';
+export * from './Modal';
 export * from './Pagination';
 export * from './RadioButton';
 export * from './RadioGroup';
