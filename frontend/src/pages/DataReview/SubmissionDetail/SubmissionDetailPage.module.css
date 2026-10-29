@@ -91,15 +91,9 @@
   margin-top: 16px;
 }
 
-/* Confirm popup: navy scheme over a grey, blurred page */
+/* Confirm popup: navy scheme (backdrop comes from Modal, shared by every popup) */
 .confirmDialog {
   border-radius: var(--radius-lg);
-  box-shadow: 0 18px 40px rgba(23, 26, 31, 0.18);
-}
-
-.confirmDialog::backdrop {
-  background: var(--color-backdrop);
-  backdrop-filter: blur(1.5px);
 }
 
 .confirm {
