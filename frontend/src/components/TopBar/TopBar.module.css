@@ -3,8 +3,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  height: 52px;
-  padding: 0 16px 0 6px;
+  height: 72px;
+  padding: 0 24px;
   background: var(--color-white);
   border-bottom: 1px solid var(--color-border);
 }
@@ -12,14 +12,17 @@
 .brand {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 14px;
   min-width: 0;
 }
 
+/* Sized to the logo file's own proportions (177 × 110) with no extra box, so the
+   image isn't squeezed further and its small text stays as legible as possible. */
 .logo {
-  width: 90px;
-  height: 44px;
-  padding: 2px;
+  height: 60px;
+  aspect-ratio: 177 / 110;
+  padding: 0;
+  background: none;
 }
 
 .titles {
@@ -30,36 +33,37 @@
 
 .title {
   color: var(--color-body);
-  font-size: 13px;
+  font-size: 20px;
   font-weight: 700;
+  letter-spacing: -0.3px;
 }
 
 .institution {
   color: var(--color-gold-500);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
 }
 
 .user {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .roleLabel {
   margin-right: 4px;
   color: var(--color-gold-600);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
 }
 
 .avatar {
   display: grid;
   place-items: center;
-  width: 28px;
-  height: 28px;
+  width: 36px;
+  height: 36px;
   color: var(--color-white);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
   background: var(--color-sidebar);
   border-radius: 50%;
@@ -68,25 +72,25 @@
 .userText {
   display: flex;
   flex-direction: column;
-  line-height: 1.2;
+  line-height: 1.25;
 }
 
 .userName {
   color: var(--color-body);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
 }
 
 .userRole {
   color: var(--color-text-secondary);
-  font-size: 9px;
+  font-size: 11px;
 }
 
 .logout {
   display: grid;
   place-items: center;
   margin-left: 10px;
-  padding: 4px;
+  padding: 6px;
   color: var(--color-status-rejected);
   background: none;
   border: none;
