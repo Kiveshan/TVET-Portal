@@ -9,7 +9,9 @@ import {
   type SubmissionStatus,
 } from '@/components';
 import { SUBMISSIONS } from '@/constants/mockSubmissions';
+import { useReviews } from '@/hooks/useReviews';
 import { DashboardLayout } from '@/layouts/DashboardLayout';
+import { statusAfterReview } from '@/services/reviewStore';
 import type { Submission } from '@/types/submission';
 import { formatDate } from '@/utils/formatDate';
 import styles from './DashboardPage.module.css';
@@ -55,7 +57,14 @@ export function DashboardPage() {
   const [page, setPage] = useState(1);
   const [activeFilter, setActiveFilter] = useState<StatusFilter>('all');
 
-  const filtered = SUBMISSIONS.filter(matches(activeFilter));
+  const reviews = useReviews();
+  // Counts and statuses reflect any DHET decision submitted since the data was loaded.
+  const submissions = SUBMISSIONS.map((submission) => ({
+    ...submission,
+    status: statusAfterReview(submission, reviews),
+  }));
+
+  const filtered = submissions.filter(matches(activeFilter));
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const pageRows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
@@ -78,7 +87,7 @@ export function DashboardPage() {
         {KPI_FILTERS.map((filter) => (
           <KpiCard
             key={filter.id}
-            value={SUBMISSIONS.filter(matches(filter.id)).length}
+            value={submissions.filter(matches(filter.id)).length}
             label={filter.label}
             tone={filter.tone}
             selected={activeFilter === filter.id}

@@ -64,12 +64,9 @@
   text-transform: uppercase;
 }
 
-.filterField select {
-  font-size: 12px;
-}
-
 .filterField > div {
-  padding: 0 10px;
+  padding: 0 12px;
+  font-size: 12px;
   background: var(--color-table-head);
   box-shadow: none;
 }
@@ -120,8 +117,52 @@
   gap: 14px;
 }
 
-.downloadButton {
-  align-self: flex-end;
+/* DHET rejections: keep "Rejected By" and "Reason" in view while scrolling the file's columns */
+.pinnedDecision th:nth-last-child(-n + 2),
+.pinnedDecision td:nth-last-child(-n + 2) {
+  position: sticky;
+  background: var(--color-white);
+}
+
+.pinnedDecision th:nth-last-child(-n + 2) {
+  z-index: 2;
+  background: var(--color-table-head);
+}
+
+.pinnedDecision th:last-child,
+.pinnedDecision td:last-child {
+  right: 0;
+  /* Fixed width so the "Rejected By" column can sit exactly beside it */
+  width: 200px;
+  min-width: 200px;
+  max-width: 200px;
+  white-space: normal;
+}
+
+.pinnedDecision th:nth-last-child(2),
+.pinnedDecision td:nth-last-child(2) {
+  right: 200px;
+  box-shadow: -8px 0 8px -8px rgba(23, 26, 31, 0.18);
+}
+
+.detailsHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.detailsStatus {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.reviewNote {
+  color: var(--color-text-secondary);
+  font-size: 11px;
 }
 
 /* Scrolls both ways inside the overlay; header stays visible while scrolling down. */

@@ -15,12 +15,20 @@ import {
 import { getSubmissionRecords } from '@/constants/mockSubmissionRecords';
 import { ALL_COLLEGE_SUBMISSIONS, SUBMISSIONS } from '@/constants/mockSubmissions';
 import { useAuth } from '@/hooks/useAuth';
+import { useReviews } from '@/hooks/useReviews';
 import { DashboardLayout } from '@/layouts/DashboardLayout';
 import { PATHS } from '@/routes/paths';
-import type { Submission, SubmissionRecord } from '@/types/submission';
+import { statusAfterReview } from '@/services/reviewStore';
+import type {
+  ReviewedRejection,
+  Submission,
+  SubmissionRecord,
+  SubmissionReview,
+} from '@/types/submission';
 import { cn } from '@/utils/classNames';
 import { downloadCsv } from '@/utils/downloadCsv';
-import { formatDate } from '@/utils/formatDate';
+import { formatDate, formatDateTime } from '@/utils/formatDate';
+import { columnsFor, formatCell } from './SubmissionDetail/fileTable';
 import styles from './DataReviewPage.module.css';
 
 const ALL = 'all';
@@ -32,6 +40,7 @@ const STATUS_OPTIONS: DropdownOption[] = [
   { value: 'awaiting', label: 'Awaiting Approval' },
   { value: 'approved', label: 'Approved' },
   { value: 'rejected', label: 'Rejected' },
+  { value: 'resubmitted', label: 'Resubmitted' },
 ];
 
 /** "All …" option followed by the distinct values found in the data. */
@@ -125,6 +134,33 @@ function recordColumnsFor(submission: Submission): DataTableColumn<SubmissionRec
     : RECORD_COLUMNS.filter((column) => !REJECTION_ONLY_KEYS.has(column.key));
 }
 
+/** "DHET (Lerato Mokoena, 29/10/2026, 10:15)", the same form as the sample rows use. */
+function reviewerLabel(review: SubmissionReview): string {
+  return `DHET (${review.reviewer}, ${formatDateTime(review.reviewedAt)})`;
+}
+
+/** Rows DHET rejected: the file's own columns, then who rejected each row and why. */
+function rejectionColumns(review: SubmissionReview): DataTableColumn<ReviewedRejection>[] {
+  return [
+    ...columnsFor<ReviewedRejection>(review.columns),
+    { key: 'rejectedBy', header: 'Rejected By', render: () => reviewerLabel(review) },
+    { key: 'reason', header: 'Reason', emphasis: true, render: (row) => row.reason },
+  ];
+}
+
+function downloadRejections(submission: Submission, review: SubmissionReview) {
+  const baseName = submission.fileName.replace(/\.[^.]+$/, '');
+  downloadCsv(
+    `${baseName}-rejections.csv`,
+    [...review.columns.map((column) => column.label), 'Rejected By', 'Reason'],
+    review.rejections.map((row) => [
+      ...review.columns.map((column) => formatCell(row.values[column.key])),
+      reviewerLabel(review),
+      row.reason,
+    ]),
+  );
+}
+
 function downloadRecords(submission: Submission, records: SubmissionRecord[]) {
   const baseName = submission.fileName.replace(/\.[^.]+$/, '');
   const columns = recordColumnsFor(submission);
@@ -140,8 +176,14 @@ function downloadRecords(submission: Submission, records: SubmissionRecord[]) {
 export function DataReviewPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const reviews = useReviews();
   const view = user?.role === 'DHET' ? DHET_VIEW : TVET_VIEW;
-  const { submissions, pageSize, extraFilters } = view;
+  const { pageSize, extraFilters } = view;
+  // Statuses reflect any DHET decision submitted since the data was loaded.
+  const submissions = view.submissions.map((submission) => ({
+    ...submission,
+    status: statusAfterReview(submission, reviews),
+  }));
 
   const [college, setCollege] = useState(ALL);
   const [financialYear, setFinancialYear] = useState(ALL);
@@ -149,6 +191,8 @@ export function DataReviewPage() {
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Submission | null>(null);
   const selectedRecords = selected ? getSubmissionRecords(selected.id) : [];
+  const selectedReview = selected ? reviews[selected.fileName] : undefined;
+  const showRejections = Boolean(selectedReview && selectedReview.rejections.length > 0);
 
   const collegeOptions = buildOptions(
     submissions.map((submission) => submission.college),
@@ -211,7 +255,9 @@ export function DataReviewPage() {
               label="College"
               options={collegeOptions}
               value={college}
-              onChange={(e) => changeCollege(e.target.value)}
+              searchable
+              placeholder="Search colleges"
+              onValueChange={changeCollege}
               containerClassName={cn(styles.filterField, styles.collegeField)}
             />
           )}
@@ -259,20 +305,43 @@ export function DataReviewPage() {
       >
         {selected && (
           <div className={styles.details}>
-            <Button
-              variant="accent"
-              size="sm"
-              className={styles.downloadButton}
-              onClick={() => downloadRecords(selected, selectedRecords)}
-            >
-              Download File
-            </Button>
-            <DataTable
-              columns={recordColumnsFor(selected)}
-              rows={selectedRecords}
-              getRowKey={(row) => String(row.rowNumber)}
-              className={styles.recordsTable}
-            />
+            <div className={styles.detailsHeader}>
+              <div className={styles.detailsStatus}>
+                <StatusBadge status={selected.status} />
+                {selectedReview && (
+                  <span className={styles.reviewNote}>
+                    Reviewed by {reviewerLabel(selectedReview)} ·{' '}
+                    {selectedReview.approvedCount}/{selectedReview.total} rows approved
+                  </span>
+                )}
+              </div>
+              <Button
+                variant="accent"
+                size="sm"
+                onClick={() =>
+                  selectedReview && showRejections
+                    ? downloadRejections(selected, selectedReview)
+                    : downloadRecords(selected, selectedRecords)
+                }
+              >
+                Download File
+              </Button>
+            </div>
+            {selectedReview && showRejections ? (
+              <DataTable
+                columns={rejectionColumns(selectedReview)}
+                rows={selectedReview.rejections}
+                getRowKey={(row) => row.rowId}
+                className={cn(styles.recordsTable, styles.pinnedDecision)}
+              />
+            ) : (
+              <DataTable
+                columns={recordColumnsFor(selected)}
+                rows={selectedRecords}
+                getRowKey={(row) => String(row.rowNumber)}
+                className={styles.recordsTable}
+              />
+            )}
           </div>
         )}
       </Modal>

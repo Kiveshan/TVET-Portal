@@ -76,7 +76,7 @@ export function SubmissionSummary({ submission, onDownload }: SubmissionSummaryP
             {datasetOf(submission.fileName)}
           </DetailTile>
           <DetailTile label="Version" className={styles.detail}>
-            v1 (original)
+            {submission.status === 'resubmitted' ? 'v2 (resubmission)' : 'v1 (original)'}
           </DetailTile>
         </dl>
       </Card>

@@ -1,7 +1,8 @@
 import { cn } from '@/utils/classNames';
 import styles from './StatusBadge.module.css';
 
-export type SubmissionStatus = 'awaiting' | 'approved' | 'rejected';
+/** `resubmitted` = sent in again after being rejected, waiting for review. */
+export type SubmissionStatus = 'awaiting' | 'approved' | 'rejected' | 'resubmitted';
 export type UserStatus = 'pending' | 'approved' | 'rejected' | 'disabled';
 export type BadgeStatus = SubmissionStatus | UserStatus;
 
@@ -10,6 +11,7 @@ const LABELS: Record<BadgeStatus, string> = {
   pending: 'Pending',
   approved: 'Approved',
   rejected: 'Rejected',
+  resubmitted: 'Resubmitted',
   disabled: 'Disabled',
 };
 

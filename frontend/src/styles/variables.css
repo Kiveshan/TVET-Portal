@@ -42,6 +42,7 @@
   --color-status-pending-text: #5c4400;
   --color-status-approved: #148a3f;
   --color-status-rejected: #d22b2b;
+  --color-status-resubmitted: #2563eb;
   --color-kpi-pending: #b7791f;
   --color-kpi-approved: #148a3f;
   --color-kpi-rejected: #d22b2b;
@@ -51,6 +52,8 @@
   --color-navy-600: #2c4d8e;
   --color-navy-muted: #6b7895;
   --color-backdrop: rgba(110, 116, 128, 0.45);
+  /* Default modal backdrop: dark enough to dim the sidebar too, so the dialog reads as centred */
+  --color-backdrop-strong: rgba(15, 23, 42, 0.75);
 
   /* Stripe (SA flag-inspired accent bar) */
   --stripe-red: #ea4335;

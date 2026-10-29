@@ -1,20 +1,32 @@
 import type { DataTableColumn } from '@/components';
-import type { FileCellValue, FileRow, FileTable, Submission } from '@/types/submission';
+import type {
+  FileCellValue,
+  FileColumn,
+  FileRow,
+  FileTable,
+  Submission,
+} from '@/types/submission';
 import { downloadCsv } from '@/utils/downloadCsv';
 
 // Helpers shared by the selection and rejection steps.
 
-function formatCell(value: FileCellValue): string {
+export function formatCell(value: FileCellValue): string {
   return value === null || value === '' ? '—' : String(value);
 }
 
-/** DataTable columns for whatever columns the file contains. */
-export function toColumns(table: FileTable): DataTableColumn<FileRow>[] {
-  return table.columns.map((column) => ({
+/** DataTable columns for whatever columns a file contains (rows carry their cells in `values`). */
+export function columnsFor<T extends Pick<FileRow, 'values'>>(
+  columns: FileColumn[],
+): DataTableColumn<T>[] {
+  return columns.map((column) => ({
     key: column.key,
     header: column.label,
     render: (row) => formatCell(row.values[column.key]),
   }));
+}
+
+export function toColumns(table: FileTable): DataTableColumn<FileRow>[] {
+  return columnsFor(table.columns);
 }
 
 export function downloadTable(submission: Submission, fileName: string, table: FileTable) {
