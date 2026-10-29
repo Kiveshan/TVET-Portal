@@ -53,7 +53,7 @@ export function TopBar({
           <span className={styles.userRole}>{user.role}</span>
         </div>
         <button type="button" className={styles.logout} onClick={onLogout} aria-label="Log out">
-          <Icon name="logout" size={20} />
+          <Icon name="logout" size={22} />
         </button>
       </div>
     </header>
