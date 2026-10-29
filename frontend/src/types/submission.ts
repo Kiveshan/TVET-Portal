@@ -71,3 +71,25 @@ export interface ReviewSelectionState {
   fileId: string;
   approvedRowIds: string[];
 }
+
+export interface ReviewedRejection {
+  rowId: string;
+  values: Record<string, FileCellValue>;
+  reason: string;
+}
+
+/** A DHET decision on one table of a submission, as the TVET side sees it. */
+export interface SubmissionReview {
+  /** The submission's file name; links the DHET and TVET views of the same submission. */
+  fileName: string;
+  tableName: string;
+  /** Name of the DHET user who submitted the decision. */
+  reviewer: string;
+  /** ISO timestamp. */
+  reviewedAt: string;
+  status: 'approved' | 'rejected';
+  approvedCount: number;
+  total: number;
+  columns: FileColumn[];
+  rejections: ReviewedRejection[];
+}

@@ -22,6 +22,9 @@ export const SUBMISSIONS: Submission[] = [
 export const ALL_COLLEGE_SUBMISSIONS: Submission[] = [
   // Backed by the anonymised Parquet sample in public/mock-bucket.
   { id: 'dhet-19', submittedOn: '2026-10-17', college: 'Flavius Mareka TVET College', fileName: 'flaviusmareka-campus-2026-27.parquet', financialYear: '2026/27', status: 'awaiting' },
+  // Sent in again after the earlier version was rejected (see dhet-3 and dhet-14).
+  { id: 'dhet-20', submittedOn: '2026-10-21', college: 'Northlink TVET College', fileName: 'northlink-enrolments-2025-26-v2.xlsx', financialYear: '2025/26', status: 'resubmitted' },
+  { id: 'dhet-21', submittedOn: '2026-10-19', college: 'Esayidi TVET College', fileName: 'esayidi-enrolments-2024-25-v2.xlsx', financialYear: '2024/25', status: 'resubmitted' },
   { id: 'dhet-1', submittedOn: '2026-10-12', college: 'False Bay TVET College', fileName: 'falsebay-enrolments-2025-26.xlsx', financialYear: '2025/26', status: 'awaiting' },
   { id: 'dhet-2', submittedOn: '2026-10-08', college: 'Boland TVET College', fileName: 'boland-achievement-q2-2025-26.parquet', financialYear: '2025/26', status: 'approved' },
   { id: 'dhet-3', submittedOn: '2026-10-05', college: 'Northlink TVET College', fileName: 'northlink-enrolments-2025-26.xlsx', financialYear: '2025/26', status: 'rejected' },

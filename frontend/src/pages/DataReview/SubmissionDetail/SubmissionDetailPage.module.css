@@ -102,24 +102,10 @@
   backdrop-filter: blur(1.5px);
 }
 
-/* Modal's × button: lighter, thinner, as in the mockup */
-.confirmDialog button[aria-label='Close'] {
-  top: 10px;
-  right: 12px;
-  color: var(--color-placeholder);
-}
-
-.confirmDialog button[aria-label='Close'] svg {
-  width: 16px;
-  height: 16px;
-  stroke-width: 1.5;
-}
-
 .confirm {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-top: -14px;
   text-align: center;
 }
 
@@ -137,8 +123,7 @@
   font-weight: 700;
 }
 
-.confirmText,
-.confirmQuestion {
+.confirmText {
   margin: 0;
   color: var(--color-navy-muted);
   font-size: 11px;
@@ -148,12 +133,6 @@
 .confirmText strong {
   color: var(--color-navy-600);
   font-weight: 700;
-}
-
-.confirmQuestion {
-  margin-top: 20px;
-  color: var(--color-navy-600);
-  font-weight: 600;
 }
 
 .confirmActions {

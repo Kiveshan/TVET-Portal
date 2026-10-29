@@ -7,6 +7,7 @@ import type {
   SubmissionFile,
 } from '@/types/submission';
 import { readParquet, readParquetRowCount, type ParquetContents } from './parquetReader';
+import { reviewStore } from './reviewStore';
 
 // Frontend-only stubs. Replace with real API calls once the backend exists:
 //   GET  /submissions/:id
@@ -75,14 +76,33 @@ export async function getFileRows(submissionId: string, fileId: string): Promise
   };
 }
 
+/** Saves a DHET decision; the TVET side then sees the status, rejected rows and reasons. */
 export async function submitFileReview(
   submissionId: string,
   fileId: string,
   decision: FileReviewDecision,
+  reviewer: string,
 ): Promise<void> {
   await delay(500);
-  console.info('[submissionService] review', submissionId, fileId, {
-    approved: decision.approvedRowIds.length,
-    rejected: decision.rejections.length,
+  const submission = findSubmission(submissionId);
+  const table = getMockTables(submission).find((t) => t.folder === fileId);
+  if (!table) throw new NotFoundError('File');
+  const { columns, rows } = await loadTable(table);
+  const valuesById = new Map(rows.map((values, index) => [String(values.RecId ?? index + 1), values]));
+
+  reviewStore.save({
+    fileName: submission.fileName,
+    tableName: table.name,
+    reviewer,
+    reviewedAt: new Date().toISOString(),
+    status: decision.rejections.length > 0 ? 'rejected' : 'approved',
+    approvedCount: decision.approvedRowIds.length,
+    total: rows.length,
+    columns: columns.map((key) => ({ key, label: toLabel(key) })),
+    rejections: decision.rejections.map(({ rowId, reason }) => ({
+      rowId,
+      reason,
+      values: valuesById.get(rowId) ?? {},
+    })),
   });
 }

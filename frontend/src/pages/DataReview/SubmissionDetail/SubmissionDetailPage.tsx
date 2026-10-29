@@ -2,8 +2,11 @@ import { useCallback, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Button, Card, Checkbox, DataTable, Icon, Modal, Toast } from '@/components';
 import { useAsync } from '@/hooks/useAsync';
+import { useAuth } from '@/hooks/useAuth';
+import { useReviews } from '@/hooks/useReviews';
 import { DashboardLayout } from '@/layouts/DashboardLayout';
 import { PATHS } from '@/routes/paths';
+import { statusAfterReview } from '@/services/reviewStore';
 import {
   getFileRows,
   getSubmission,
@@ -16,6 +19,9 @@ import { downloadTable, toColumns } from './fileTable';
 import { BackToDataReview, FilePicker, SubmissionSummary } from './SubmissionSummary';
 import styles from './SubmissionDetailPage.module.css';
 
+/** "1 row" / "4 rows" */
+const rowCount = (count: number) => `${count} ${count === 1 ? 'row' : 'rows'}`;
+
 /** Ticks belong to one file, so switching file starts with none ticked. */
 interface Selection {
   fileId: string;
@@ -25,6 +31,8 @@ interface Selection {
 export function SubmissionDetailPage() {
   const { submissionId = '' } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const reviews = useReviews();
   // Coming back from the rejection step restores the file and ticks.
   const returning = useLocation().state as ReviewSelectionState | null;
 
@@ -90,10 +98,12 @@ export function SubmissionDetailPage() {
   const submitApproval = async () => {
     setSubmitting(true);
     try {
-      await submitFileReview(submissionId, fileId, {
-        approvedRowIds: [...selectedKeys],
-        rejections: [],
-      });
+      await submitFileReview(
+        submissionId,
+        fileId,
+        { approvedRowIds: [...selectedKeys], rejections: [] },
+        user?.name ?? 'DHET reviewer',
+      );
       setConfirming(false);
       setApprovedFileId(fileId);
       setToastOpen(true);
@@ -105,7 +115,7 @@ export function SubmissionDetailPage() {
   return (
     <DashboardLayout>
       <SubmissionSummary
-        submission={details}
+        submission={{ ...details, status: statusAfterReview(details, reviews) }}
         onDownload={
           rows && selectedFile ? () => downloadTable(details, selectedFile.name, rows) : undefined
         }
@@ -139,7 +149,8 @@ export function SubmissionDetailPage() {
                 />
                 <p className={styles.selectionNote} aria-live="polite">
                   <Icon name="alert" size={13} />
-                  {approvedCount}/{total} rows have been selected, {remaining} are remaining for
+                  {approvedCount}/{total} rows have been selected, {remaining}{' '}
+                  {remaining === 1 ? 'is' : 'are'} remaining for
                   rejection
                 </p>
               </>
@@ -188,6 +199,7 @@ export function SubmissionDetailPage() {
         onClose={() => setConfirming(false)}
         ariaLabel="Confirm your selection"
         width={372}
+        showClose={false}
         className={styles.confirmDialog}
       >
         <div className={styles.confirm}>
@@ -197,17 +209,17 @@ export function SubmissionDetailPage() {
           <h2 className={styles.confirmTitle}>Confirm Your Selection</h2>
           {allApproved ? (
             <p className={styles.confirmText}>
-              You have selected all <strong>{approvedCount} rows</strong> for approval. No rows
-              will be rejected, so the decision will be finalised now.
+              You have selected{' '}
+              <strong>{approvedCount === 1 ? 'the only row' : `all ${rowCount(approvedCount)}`}</strong>{' '}
+              for approval. No rows will be rejected, so the decision will be finalised now.
             </p>
           ) : (
             <p className={styles.confirmText}>
-              You have selected <strong>{approvedCount} rows</strong> for approval. The remaining{' '}
-              {remaining} <strong>rows</strong> will require rejection reasons before the decision
-              can be finalised.
+              You have selected <strong>{rowCount(approvedCount)}</strong> for approval. The
+              remaining <strong>{rowCount(remaining)}</strong> will require rejection reasons before
+              the decision can be finalised.
             </p>
           )}
-          <p className={styles.confirmQuestion}>Do you want to continue?</p>
           <div className={styles.confirmActions}>
             <Button
               variant="secondary"

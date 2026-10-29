@@ -2,8 +2,11 @@ import { useCallback, useState } from 'react';
 import { Navigate, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Button, Card, DataTable, Icon, TextBox, Toast, type DataTableColumn } from '@/components';
 import { useAsync } from '@/hooks/useAsync';
+import { useAuth } from '@/hooks/useAuth';
+import { useReviews } from '@/hooks/useReviews';
 import { DashboardLayout } from '@/layouts/DashboardLayout';
 import { PATHS } from '@/routes/paths';
+import { statusAfterReview } from '@/services/reviewStore';
 import {
   getFileRows,
   getSubmission,
@@ -19,6 +22,8 @@ import styles from './RejectionReasonsPage.module.css';
 export function RejectionReasonsPage() {
   const { submissionId = '' } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const reviews = useReviews();
   const selection = useLocation().state as ReviewSelectionState | null;
   const fileId = selection?.fileId ?? '';
 
@@ -74,10 +79,15 @@ export function RejectionReasonsPage() {
     }
     setSubmitting(true);
     try {
-      await submitFileReview(submissionId, fileId, {
-        approvedRowIds: selection.approvedRowIds,
-        rejections: rejectedRows.map((row) => ({ rowId: row.rowId, reason: reasonOf(row) })),
-      });
+      await submitFileReview(
+        submissionId,
+        fileId,
+        {
+          approvedRowIds: selection.approvedRowIds,
+          rejections: rejectedRows.map((row) => ({ rowId: row.rowId, reason: reasonOf(row) })),
+        },
+        user?.name ?? 'DHET reviewer',
+      );
       setResult({ approved: approved.size, total: rows?.total ?? 0 });
       setToastOpen(true);
     } finally {
@@ -89,7 +99,7 @@ export function RejectionReasonsPage() {
     <DashboardLayout>
       {details ? (
         <SubmissionSummary
-          submission={details}
+          submission={{ ...details, status: statusAfterReview(details, reviews) }}
           onDownload={
             rows && selectedFile ? () => downloadTable(details, selectedFile.name, rows) : undefined
           }

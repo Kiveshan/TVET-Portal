@@ -25,6 +25,11 @@
   background: var(--color-status-rejected);
 }
 
+.solid.resubmitted {
+  color: var(--color-white);
+  background: var(--color-status-resubmitted);
+}
+
 .solid.disabled {
   color: var(--color-white);
   background: var(--color-placeholder);

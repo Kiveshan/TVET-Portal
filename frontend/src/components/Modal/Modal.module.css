@@ -8,12 +8,16 @@
 }
 
 .dialog::backdrop {
-  background: rgba(0, 0, 0, 0.3);
+  background: var(--color-backdrop-strong);
 }
 
 .content {
   position: relative;
   padding: 44px 26px 28px;
+}
+
+.noClose {
+  padding-top: 28px;
 }
 
 .close {
