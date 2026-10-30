@@ -4,6 +4,8 @@
   --color-green-900: #0b5e36;
   --color-green-700: #007a4d;
   --color-green-600: #0a8a59;
+  /* Light tint of the brand green, for selected/active surfaces */
+  --color-green-100: #dcefe4;
   --color-olive-500: #7da638;
   --color-gold-500: #ffb612;
   --color-gold-600: #c9a227;
@@ -42,7 +44,6 @@
   --color-status-pending-text: #5c4400;
   --color-status-approved: #148a3f;
   --color-status-rejected: #d22b2b;
-  --color-status-resubmitted: #2563eb;
   --color-kpi-pending: #b7791f;
   --color-kpi-approved: #148a3f;
   --color-kpi-rejected: #d22b2b;

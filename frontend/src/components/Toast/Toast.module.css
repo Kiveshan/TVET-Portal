@@ -10,6 +10,20 @@
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-toast);
   animation: slideIn 220ms ease-out;
+  /* Allows vertical page scrolling on touch screens while still catching horizontal swipes */
+  touch-action: pan-y;
+  cursor: grab;
+  user-select: none;
+}
+
+.dragging {
+  cursor: grabbing;
+  opacity: 0.9;
+}
+
+/* Slides off to the right when dismissed (×, swipe or timeout) */
+.leaving {
+  animation: slideOut 200ms ease-in forwards;
 }
 
 .iconPanel {
@@ -59,5 +73,19 @@
   to {
     opacity: 1;
     transform: translateX(0);
+  }
+}
+
+@keyframes slideOut {
+  to {
+    opacity: 0;
+    transform: translateX(110%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast,
+  .leaving {
+    animation-duration: 1ms;
   }
 }
