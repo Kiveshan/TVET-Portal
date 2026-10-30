@@ -40,7 +40,6 @@ const STATUS_OPTIONS: DropdownOption[] = [
   { value: 'awaiting', label: 'Awaiting Approval' },
   { value: 'approved', label: 'Approved' },
   { value: 'rejected', label: 'Rejected' },
-  { value: 'resubmitted', label: 'Resubmitted' },
 ];
 
 /** "All …" option followed by the distinct values found in the data. */
