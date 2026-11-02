@@ -1,0 +1,79 @@
+name: Backend CI
+
+on:
+  pull_request:
+    branches: [staging, main]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci.yml'
+  push:
+    branches: [staging, main]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: backend-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Typecheck & migrations
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    # A throwaway database, so the migrations and seed are tested against real Postgres.
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: tvet
+          POSTGRES_PASSWORD: tvet
+          POSTGRES_DB: tvet_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U tvet -d tvet_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    # CI-only values; src/config/env.ts refuses to start without them.
+    env:
+      DATABASE_URL: postgresql://tvet:tvet@localhost:5432/tvet_ci?schema=public
+      JWT_SECRET: ci-only-secret-not-used-anywhere-real-0123456789
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      # The client is gitignored (src/generated/prisma), and the typecheck needs it.
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Apply migrations to a fresh database
+        run: npx prisma migrate deploy
+
+      # Fails if schema.prisma was changed without a matching migration.
+      - name: Check migrations match schema
+        run: npx prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --exit-code
+
+      - name: Seed
+        run: npx prisma db seed
