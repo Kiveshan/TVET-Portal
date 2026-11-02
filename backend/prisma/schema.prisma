@@ -1,0 +1,70 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// Which part of the portal a user can use. TVET and DHET match the
+/// organisation type picked at registration; SYSTEM_ADMIN is never self-registered.
+enum UserRole {
+  TVET
+  DHET
+  SYSTEM_ADMIN
+}
+
+enum UserStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  DISABLED
+}
+
+model Institution {
+  id    String @id @default(uuid())
+  name  String @unique
+  users User[]
+
+  @@map("institutions")
+}
+
+/// A job title (e.g. "Principal", "Planning Officer"). Each one belongs to a
+/// portal role, so the registration form only offers titles for the chosen organisation.
+model JobRole {
+  id    String   @id @default(uuid())
+  name  String
+  role  UserRole
+  users User[]
+
+  @@unique([name, role])
+  @@map("job_roles")
+}
+
+model User {
+  id            String     @id @default(uuid())
+  full_name     String
+  email         String     @unique
+  persal_number String?    @unique
+  password_hash String
+  role          UserRole
+  status        UserStatus @default(PENDING)
+
+  job_role_id String
+  job_role    JobRole @relation(fields: [job_role_id], references: [id])
+
+  institution_id String?
+  institution    Institution? @relation(fields: [institution_id], references: [id])
+
+  reviewed_by_id String?
+  reviewed_by    User?     @relation("UserReviews", fields: [reviewed_by_id], references: [id])
+  reviewedUsers  User[]    @relation("UserReviews")
+  reviewed_at    DateTime?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@index([status, role])
+  @@map("users")
+}

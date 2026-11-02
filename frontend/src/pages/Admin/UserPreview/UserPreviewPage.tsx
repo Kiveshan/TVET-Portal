@@ -6,24 +6,29 @@ import {
   DecisionAlert,
   DetailTile,
   StatusBadge,
+  Toast,
   type Decision,
 } from '@/components';
-import { useUsers } from '@/hooks/useUsers';
+import { useAsync } from '@/hooks/useAsync';
 import { DashboardLayout } from '@/layouts/DashboardLayout';
 import { PATHS } from '@/routes/paths';
-import { updateUserStatus } from '@/services/userService';
+import { ApiError } from '@/services/apiClient';
+import { getUser, updateUserStatus } from '@/services/userService';
 import styles from './UserPreviewPage.module.css';
 
 export function UserPreviewPage() {
-  const { userId } = useParams();
-  const users = useUsers();
+  const { userId = '' } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const [confirming, setConfirming] = useState<Decision | null>(null);
   const [saving, setSaving] = useState(false);
   const [decision, setDecision] = useState<Decision | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  // Bumped after a decision so the user is fetched again with their new status.
+  const [version, setVersion] = useState(0);
 
-  const user = users.find((candidate) => candidate.id === userId);
+  const loaded = useAsync(`${userId}|${version}`, () => getUser(userId), { keepPreviousData: true });
+  const user = loaded.data;
 
   // Return to the list with the filter and page it was opened from.
   const goBack = () => {
@@ -37,21 +42,36 @@ export function UserPreviewPage() {
     try {
       await updateUserStatus(user.id, confirming);
       setDecision(confirming);
-      setConfirming(null);
+    } catch (caught) {
+      // e.g. another admin already reviewed this registration
+      if (!(caught instanceof ApiError)) throw caught;
+      setError(caught.message);
     } finally {
+      setConfirming(null);
       setSaving(false);
+      setVersion((current) => current + 1);
     }
   };
 
   const closeAlert = useCallback(() => setDecision(null), []);
+  const closeError = useCallback(() => setError(null), []);
 
   if (!user) {
+    const notFound = loaded.error instanceof ApiError && loaded.error.status === 404;
+    let heading = 'Loading user…';
+    if (notFound) heading = 'User not found';
+    else if (loaded.error) heading = 'Could not load this user';
+
     return (
       <DashboardLayout>
         <div className={styles.page}>
           <section className={styles.card}>
-            <h1 className={styles.name}>User not found</h1>
-            <p className={styles.notFound}>This user may have been removed.</p>
+            <h1 className={styles.name}>{heading}</h1>
+            {loaded.error && (
+              <p className={styles.notFound}>
+                {notFound ? 'This user may have been removed.' : loaded.error.message}
+              </p>
+            )}
           </section>
           <Button variant="solid" size="lg" icon="arrowLeft" onClick={goBack} className={styles.back}>
             Back
@@ -123,6 +143,8 @@ export function UserPreviewPage() {
       />
 
       <DecisionAlert decision={decision} onClose={closeAlert} />
+
+      <Toast open={error !== null} title="Decision not saved" message={error ?? ''} onClose={closeError} />
     </DashboardLayout>
   );
 }

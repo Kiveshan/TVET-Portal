@@ -1,26 +1,30 @@
-import { TEST_PASSWORD, TEST_USERS } from '@/constants/testUsers';
-import type { AuthUser, LoginRequest, RegistrationRequest } from '@/types/auth';
-
-// Frontend-only stubs. Replace with real API calls once the backend exists.
-
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-export class InvalidCredentialsError extends Error {
-  constructor() {
-    super('Incorrect email address or password');
-    this.name = 'InvalidCredentialsError';
-  }
-}
+import type { AuthUser, LoginRequest, RegistrationOptions, RegistrationRequest } from '@/types/auth';
+import { api, ApiError } from './apiClient';
 
 export async function login(request: LoginRequest): Promise<AuthUser> {
-  await delay(400);
-  const email = request.email.trim().toLowerCase();
-  const user = TEST_USERS.find((candidate) => candidate.email === email);
-  if (!user || request.password !== TEST_PASSWORD) throw new InvalidCredentialsError();
+  const { user } = await api<{ user: AuthUser }>('/auth/login', { method: 'POST', body: request });
   return user;
 }
 
+export async function logout(): Promise<void> {
+  await api('/auth/logout', { method: 'POST' });
+}
+
+/** The user signed in with the session cookie, or null if there is no valid session. */
+export async function getCurrentUser(): Promise<AuthUser | null> {
+  try {
+    const { user } = await api<{ user: AuthUser }>('/auth/me');
+    return user;
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 401) return null;
+    throw error;
+  }
+}
+
 export async function register(request: RegistrationRequest): Promise<void> {
-  await delay(600);
-  console.info('[authService] register', request.email, request.organizationType);
+  await api('/auth/register', { method: 'POST', body: request });
+}
+
+export function getRegistrationOptions(): Promise<RegistrationOptions> {
+  return api<RegistrationOptions>('/lookups/registration-options');
 }

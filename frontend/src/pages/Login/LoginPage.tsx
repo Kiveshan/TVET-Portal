@@ -4,7 +4,8 @@ import { Button, Card, ColorStripe, Divider, Icon, TextBox, TextLink } from '@/c
 import { useAuth } from '@/hooks/useAuth';
 import { AuthLayout } from '@/layouts/AuthLayout';
 import { homePathFor } from '@/routes/paths';
-import { InvalidCredentialsError, login } from '@/services/authService';
+import { ApiError } from '@/services/apiClient';
+import { login } from '@/services/authService';
 import { isValidEmail } from '@/utils/validation';
 import styles from './LoginPage.module.css';
 
@@ -48,7 +49,8 @@ export function LoginPage() {
       const from = (location.state as { from?: string } | null)?.from;
       navigate(from ?? homePathFor(signedIn.role), { replace: true });
     } catch (error) {
-      if (!(error instanceof InvalidCredentialsError)) throw error;
+      // Wrong details, an account still pending approval, or the server being unreachable.
+      if (!(error instanceof ApiError)) throw error;
       setFormError(error.message);
       setSubmitting(false);
     }
