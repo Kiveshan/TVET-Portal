@@ -1,0 +1,36 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "main": "src/server.ts",
+  "scripts": {
+    "dev": "tsx watch --clear-screen=false src/server.ts",
+    "start": "tsx src/server.ts",
+    "typecheck": "tsc",
+    "db:migrate": "prisma migrate dev",
+    "db:seed": "prisma db seed",
+    "db:studio": "prisma studio"
+  },
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "devDependencies": {
+    "@types/cookie-parser": "^1.4.9",
+    "@types/express": "^5.0.3",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^26.6.6",
+    "prisma": "^7.10.1",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.10.1",
+    "@prisma/client": "^7.10.1",
+    "bcryptjs": "^3.0.2",
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^18.0.9",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.7.2",
+    "jsonwebtoken": "^9.0.2",
+    "zod": "^4.1.12"
+  }
+}

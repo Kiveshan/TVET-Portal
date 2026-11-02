@@ -1,4 +1,4 @@
-import { useCallback, useState, type FormEvent } from 'react';
+import { useCallback, useMemo, useState, type FormEvent } from 'react';
 import {
   Button,
   Card,
@@ -6,15 +6,18 @@ import {
   ConfirmationModal,
   Divider,
   Dropdown,
+  Icon,
   RadioGroup,
   TextBox,
   TextLink,
   Toast,
 } from '@/components';
-import { INSTITUTION_OPTIONS, ORGANIZATION_TYPES, ROLE_OPTIONS } from '@/constants/options';
+import { ORGANIZATION_TYPES } from '@/constants/options';
+import { useAsync } from '@/hooks/useAsync';
 import { AuthLayout } from '@/layouts/AuthLayout';
-import { register } from '@/services/authService';
-import type { OrganizationType, RegistrationRequest } from '@/types/auth';
+import { ApiError } from '@/services/apiClient';
+import { getRegistrationOptions, register } from '@/services/authService';
+import type { NamedOption, OrganizationType, RegistrationRequest } from '@/types/auth';
 import { isValidEmail, isValidPassword, isValidPersalNumber } from '@/utils/validation';
 import styles from './RegisterPage.module.css';
 
@@ -24,13 +27,16 @@ type FormErrors = Partial<Record<keyof FormValues, string>>;
 const EMPTY_VALUES: FormValues = {
   fullName: '',
   email: '',
-  institution: '',
-  role: '',
+  institutionId: '',
+  jobRoleId: '',
   persalNumber: '',
   password: '',
 };
 
 const PASSWORD_HINT = 'Min. 8 characters with numbers';
+
+const toDropdownOptions = (options: NamedOption[] = []) =>
+  options.map(({ id, name }) => ({ value: id, label: name }));
 
 export function RegisterPage() {
   const [organizationType, setOrganizationType] = useState<OrganizationType>('DHET');
@@ -39,6 +45,17 @@ export function RegisterPage() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [toastOpen, setToastOpen] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const options = useAsync('registration-options', getRegistrationOptions);
+
+  const institutionOptions = useMemo(
+    () => toDropdownOptions(options.data?.institutions),
+    [options.data],
+  );
+  const roleOptions = useMemo(
+    () => toDropdownOptions(options.data?.jobRoles[organizationType]),
+    [options.data, organizationType],
+  );
 
   const isTvet = organizationType === 'TVET';
 
@@ -50,7 +67,7 @@ export function RegisterPage() {
   const handleOrganizationChange = (type: OrganizationType) => {
     setOrganizationType(type);
     // Roles differ per organisation, and only TVET users pick an institution
-    setValues((prev) => ({ ...prev, role: '', institution: '' }));
+    setValues((prev) => ({ ...prev, jobRoleId: '', institutionId: '' }));
     setErrors({});
   };
 
@@ -58,8 +75,8 @@ export function RegisterPage() {
     const next: FormErrors = {};
     if (!values.fullName.trim()) next.fullName = 'Full name is required';
     if (!isValidEmail(values.email)) next.email = 'Enter a valid institutional email';
-    if (isTvet && !values.institution) next.institution = 'Select your institution';
-    if (!values.role) next.role = 'Select your role';
+    if (isTvet && !values.institutionId) next.institutionId = 'Select your institution';
+    if (!values.jobRoleId) next.jobRoleId = 'Select your role';
     if (!isValidPersalNumber(values.persalNumber))
       next.persalNumber = 'PERSAL number must be 6–10 digits';
     if (!isValidPassword(values.password)) next.password = PASSWORD_HINT;
@@ -70,6 +87,7 @@ export function RegisterPage() {
     event.preventDefault();
     const nextErrors = validate();
     setErrors(nextErrors);
+    setFormError(null);
     if (Object.keys(nextErrors).length === 0) setConfirmOpen(true);
   };
 
@@ -79,11 +97,17 @@ export function RegisterPage() {
       await register({
         organizationType,
         ...values,
-        institution: isTvet ? values.institution : undefined,
+        institutionId: isTvet ? values.institutionId : undefined,
       });
       setConfirmOpen(false);
       setToastOpen(true);
       setValues(EMPTY_VALUES);
+    } catch (error) {
+      if (!(error instanceof ApiError)) throw error;
+      // Show the server's per-field messages (e.g. email already registered) on the form.
+      setConfirmOpen(false);
+      setErrors(error.fieldErrors);
+      setFormError(Object.keys(error.fieldErrors).length > 0 ? null : error.message);
     } finally {
       setSubmitting(false);
     }
@@ -138,10 +162,10 @@ export function RegisterPage() {
                 required
                 icon="building"
                 placeholder="Select institution"
-                options={INSTITUTION_OPTIONS}
-                value={values.institution}
-                onChange={(e) => setField('institution')(e.target.value)}
-                error={errors.institution}
+                options={institutionOptions}
+                value={values.institutionId}
+                onChange={(e) => setField('institutionId')(e.target.value)}
+                error={errors.institutionId}
               />
             )}
             <Dropdown
@@ -149,10 +173,10 @@ export function RegisterPage() {
               required
               icon="badge"
               placeholder="Select role"
-              options={ROLE_OPTIONS[organizationType]}
-              value={values.role}
-              onChange={(e) => setField('role')(e.target.value)}
-              error={errors.role}
+              options={roleOptions}
+              value={values.jobRoleId}
+              onChange={(e) => setField('jobRoleId')(e.target.value)}
+              error={errors.jobRoleId}
             />
             <TextBox
               label="PERSAL Number"
@@ -178,6 +202,12 @@ export function RegisterPage() {
           </div>
 
           <div className={styles.actions}>
+            {(formError || options.error) && (
+              <p className={styles.formError} role="alert">
+                <Icon name="alert" size={16} />
+                {formError ?? 'Could not load the registration options. Refresh the page to try again.'}
+              </p>
+            )}
             <Button type="submit" fullWidth>
               Submit registration
             </Button>

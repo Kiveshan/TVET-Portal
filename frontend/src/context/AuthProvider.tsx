@@ -1,43 +1,49 @@
-import { useCallback, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { setUnauthorizedHandler } from '@/services/apiClient';
+import { getCurrentUser, logout } from '@/services/authService';
 import type { AuthUser } from '@/types/auth';
 import { AuthContext } from './AuthContext';
 
-const STORAGE_KEY = 'tvet-portal.user';
-
-// Session storage keeps the user signed in across reloads in the same tab.
-// Access can throw (private mode, blocked storage), so failures fall back to signed out.
-function readStoredUser(): AuthUser | null {
-  try {
-    const raw = sessionStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as AuthUser) : null;
-  } catch {
-    return null;
-  }
-}
-
-function writeStoredUser(user: AuthUser | null) {
-  try {
-    if (user) sessionStorage.setItem(STORAGE_KEY, JSON.stringify(user));
-    else sessionStorage.removeItem(STORAGE_KEY);
-  } catch {
-    // Ignore: the session just won't survive a reload.
-  }
-}
-
+// The session lives in an httpOnly cookie set by the API. On load we ask the API who is
+// signed in, so a reload keeps the session and an expired one shows the login page.
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(readStoredUser);
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [checking, setChecking] = useState(true);
 
-  const signIn = useCallback((next: AuthUser) => {
-    writeStoredUser(next);
-    setUser(next);
+  useEffect(() => {
+    let cancelled = false;
+    getCurrentUser()
+      .catch(() => null)
+      .then((current) => {
+        if (cancelled) return;
+        setUser(current);
+        setChecking(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
+  // The API rejected the session (expired, or the account was disabled): sign out here too.
+  useEffect(() => {
+    setUnauthorizedHandler(() => setUser(null));
+    return () => setUnauthorizedHandler(null);
+  }, []);
+
+  const signIn = useCallback((next: AuthUser) => setUser(next), []);
+
   const signOut = useCallback(() => {
-    writeStoredUser(null);
     setUser(null);
+    logout().catch(() => {
+      // The cookie expires on its own; nothing else to do.
+    });
   }, []);
 
   const value = useMemo(() => ({ user, signIn, signOut }), [user, signIn, signOut]);
+
+  // Render nothing until we know whether someone is signed in, so protected pages
+  // don't bounce to the login page during the check.
+  if (checking) return null;
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

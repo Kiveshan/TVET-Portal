@@ -70,3 +70,12 @@
     grid-template-columns: 1fr;
   }
 }
+
+.formError {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 var(--space-sm);
+  color: #d64545;
+  font-size: 14px;
+}

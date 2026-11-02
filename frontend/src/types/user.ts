@@ -9,7 +9,23 @@ export interface ManagedUser {
   organizationType: OrganizationType;
   /** DHET, or the user's TVET college. */
   organization: string;
+  /** Job title, e.g. "Campus Manager". */
   role: string;
   persalNumber: string;
   status: UserStatus;
+}
+
+/** One page of users from the API. */
+export interface UserPage {
+  items: ManagedUser[];
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+}
+
+export interface UserCount {
+  status: UserStatus;
+  organizationType: OrganizationType;
+  count: number;
 }
