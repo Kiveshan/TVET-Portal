@@ -1,16 +1,62 @@
-// Reference data plus development logins. Safe to re-run: everything is upserted.
+// Reference data plus development logins. Safe to re-run: everything is upserted,
+// and the institutions table is reset to exactly INSTITUTIONS.
 // Run with: npx prisma db seed
 import type { UserRole, UserStatus } from '../src/generated/prisma/enums.ts';
 import { hashPassword } from '../src/lib/password.ts';
 import { prisma } from '../src/lib/prisma.ts';
 
+/** The TVET colleges (matches Lesedi's registration list). The institutions table is reset to exactly these. */
 const INSTITUTIONS = [
-  'Coastal KZN TVET College',
+  'Boland TVET College',
+  'Buffalo City TVET College',
+  'Capricorn TVET College',
+  'Central Johannesburg TVET College',
+  'Coastal TVET College',
   'College of Cape Town',
+  'Eastcape Midlands TVET College',
+  'Ehlanzeni TVET College',
   'Ekurhuleni East TVET College',
+  'Ekurhuleni West TVET College',
+  'Elangeni TVET College',
+  'Esayidi TVET College',
+  'False Bay TVET College',
+  'Flavius Mareka TVET College',
+  'Gert Sibande TVET College',
+  'Goldfields TVET College',
+  'Ikhala TVET College',
+  'Ingwe TVET College',
+  'King Hintsa TVET College',
+  'King Sabata Dalindyebo TVET College',
+  'Lephalale TVET College',
+  'Letaba TVET College',
+  'Lovedale TVET College',
   'Majuba TVET College',
+  'Maluti TVET College',
+  'Mnambithi TVET College',
+  'Mopani South East TVET College',
+  'Motheo TVET College',
+  'Mthashana TVET College',
+  'Nkangala TVET College',
+  'Northern Cape Rural TVET College',
+  'Northern Cape Urban TVET College',
+  'Northlink TVET College',
+  'Orbit TVET College',
+  'Port Elizabeth TVET College',
+  'Sedibeng TVET College',
+  'South Cape TVET College',
+  'South West Gauteng TVET College',
+  'Taletso TVET College',
+  'Thekwini TVET College',
+  'Tshwane North TVET College',
   'Tshwane South TVET College',
+  'uMfolozi TVET College',
   'Umgungundlovu TVET College',
+  'Vhembe TVET College',
+  'Vuselela TVET College',
+  'Waterberg TVET College',
+  'West Coast TVET College',
+  'Western TVET College',
+  'Mopani TVET College',
 ];
 
 const JOB_ROLES: Record<UserRole, string[]> = {
@@ -72,6 +118,9 @@ function buildSampleUsers(count: number): SeedUser[] {
 }
 
 async function main() {
+  // Drop institutions that are no longer in the list. Users linked to them get a
+  // null institution (ON DELETE SET NULL); seeded users are re-linked below.
+  const removed = await prisma.institution.deleteMany({ where: { name: { notIn: INSTITUTIONS } } });
   for (const name of INSTITUTIONS) {
     await prisma.institution.upsert({ where: { name }, update: {}, create: { name } });
   }
@@ -125,7 +174,7 @@ async function main() {
   }
 
   console.log(
-    `Seeded ${INSTITUTIONS.length} institutions, ${jobRoles.length} job roles and ${seedUsers.length} users.`,
+    `Seeded ${INSTITUTIONS.length} institutions (removed ${removed.count}), ${jobRoles.length} job roles and ${seedUsers.length} users.`,
   );
 }
 

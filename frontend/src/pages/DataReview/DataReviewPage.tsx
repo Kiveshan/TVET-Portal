@@ -12,19 +12,12 @@ import {
   type DropdownOption,
   type SubmissionStatus,
 } from '@/components';
-import { getSubmissionRecords } from '@/constants/mockSubmissionRecords';
-import { ALL_COLLEGE_SUBMISSIONS, SUBMISSIONS } from '@/constants/mockSubmissions';
+import { useAsync } from '@/hooks/useAsync';
 import { useAuth } from '@/hooks/useAuth';
-import { useReviews } from '@/hooks/useReviews';
 import { DashboardLayout } from '@/layouts/DashboardLayout';
 import { PATHS } from '@/routes/paths';
-import { statusAfterReview } from '@/services/reviewStore';
-import type {
-  ReviewedRejection,
-  Submission,
-  SubmissionRecord,
-  SubmissionReview,
-} from '@/types/submission';
+import { listSubmissionReviews, listSubmissions } from '@/services/submissionService';
+import type { ReviewedRejection, Submission, SubmissionReview } from '@/types/submission';
 import { cn } from '@/utils/classNames';
 import { downloadCsv } from '@/utils/downloadCsv';
 import { formatDate, formatDateTime } from '@/utils/formatDate';
@@ -71,7 +64,6 @@ const statusColumn: DataTableColumn<Submission> = {
 
 interface ReviewView {
   title: string;
-  submissions: Submission[];
   pageSize: number;
   /** DHET also filters by college and status. */
   extraFilters: boolean;
@@ -79,10 +71,9 @@ interface ReviewView {
   columns: DataTableColumn<Submission>[];
 }
 
-/** TVET users see their own files; DHET users see every college. */
+/** TVET users see their own college's submissions; DHET users see every college. */
 const TVET_VIEW: ReviewView = {
   title: 'Review',
-  submissions: SUBMISSIONS,
   pageSize: 6,
   extraFilters: false,
   sectionTitle: 'Recent Submissions',
@@ -96,7 +87,6 @@ const TVET_VIEW: ReviewView = {
 
 const DHET_VIEW: ReviewView = {
   title: 'Data Review',
-  submissions: ALL_COLLEGE_SUBMISSIONS,
   pageSize: 12,
   extraFilters: true,
   columns: [
@@ -107,33 +97,7 @@ const DHET_VIEW: ReviewView = {
   ],
 };
 
-const headcountFormatter = new Intl.NumberFormat('en-ZA');
-
-const RECORD_COLUMNS: DataTableColumn<SubmissionRecord>[] = [
-  { key: 'rowNumber', header: 'Row Number' },
-  { key: 'programmeCode', header: 'Programme Code' },
-  { key: 'programmeName', header: 'Programme Name', emphasis: true },
-  {
-    key: 'fullTimeHeadcount',
-    header: 'Full-Time Headcount',
-    emphasis: true,
-    render: (row) => headcountFormatter.format(row.fullTimeHeadcount),
-  },
-  { key: 'partTimeHeadcount', header: 'Part-Time Headcount', emphasis: true },
-  { key: 'rejectedBy', header: 'Rejected By' },
-  { key: 'reason', header: 'Reason' },
-];
-
-/** Only shown for rejected submissions; meaningless while awaiting or once approved. */
-const REJECTION_ONLY_KEYS = new Set(['rowNumber', 'rejectedBy', 'reason']);
-
-function recordColumnsFor(submission: Submission): DataTableColumn<SubmissionRecord>[] {
-  return submission.status === 'rejected'
-    ? RECORD_COLUMNS
-    : RECORD_COLUMNS.filter((column) => !REJECTION_ONLY_KEYS.has(column.key));
-}
-
-/** "DHET (Lerato Mokoena, 29/10/2026, 10:15)", the same form as the sample rows use. */
+/** "DHET (Lerato Mokoena, 29/10/2026, 10:15)" */
 function reviewerLabel(review: SubmissionReview): string {
   return `DHET (${review.reviewer}, ${formatDateTime(review.reviewedAt)})`;
 }
@@ -148,7 +112,7 @@ function rejectionColumns(review: SubmissionReview): DataTableColumn<ReviewedRej
 }
 
 function downloadRejections(submission: Submission, review: SubmissionReview) {
-  const baseName = submission.fileName.replace(/\.[^.]+$/, '');
+  const baseName = `${submission.fileName.replace(/\.[^.]+$/, '')}-${review.fileId}`;
   downloadCsv(
     `${baseName}-rejections.csv`,
     [...review.columns.map((column) => column.label), 'Rejected By', 'Reason'],
@@ -160,38 +124,53 @@ function downloadRejections(submission: Submission, review: SubmissionReview) {
   );
 }
 
-function downloadRecords(submission: Submission, records: SubmissionRecord[]) {
-  const baseName = submission.fileName.replace(/\.[^.]+$/, '');
-  const columns = recordColumnsFor(submission);
-  downloadCsv(
-    `${baseName}-review.csv`,
-    columns.map((column) => column.header),
-    records.map((record) =>
-      columns.map((column) => record[column.key as keyof SubmissionRecord]),
-    ),
+/** One table's decision in the TVET overlay: status, counts and any rejected rows. */
+function ReviewSection({ submission, review }: { submission: Submission; review: SubmissionReview }) {
+  return (
+    <div className={styles.details}>
+      <div className={styles.detailsHeader}>
+        <div className={styles.detailsStatus}>
+          <strong>{review.tableName}</strong>
+          <StatusBadge status={review.status} />
+          <span className={styles.reviewNote}>
+            Reviewed by {reviewerLabel(review)} · {review.approvedCount}/{review.total} rows approved
+          </span>
+        </div>
+        {review.rejections.length > 0 && (
+          <Button variant="accent" size="sm" onClick={() => downloadRejections(submission, review)}>
+            Download Rejections
+          </Button>
+        )}
+      </div>
+      {review.rejections.length > 0 && (
+        <DataTable
+          columns={rejectionColumns(review)}
+          rows={review.rejections}
+          getRowKey={(row) => row.rowId}
+          className={cn(styles.recordsTable, styles.pinnedDecision)}
+        />
+      )}
+    </div>
   );
 }
 
 export function DataReviewPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const reviews = useReviews();
   const view = user?.role === 'DHET' ? DHET_VIEW : TVET_VIEW;
   const { pageSize, extraFilters } = view;
-  // Statuses reflect any DHET decision submitted since the data was loaded.
-  const submissions = view.submissions.map((submission) => ({
-    ...submission,
-    status: statusAfterReview(submission, reviews),
-  }));
+
+  const loaded = useAsync('submissions', listSubmissions);
+  const submissions = loaded.data ?? [];
 
   const [college, setCollege] = useState(ALL);
   const [financialYear, setFinancialYear] = useState(ALL);
   const [status, setStatus] = useState<StatusFilter>(ALL);
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Submission | null>(null);
-  const selectedRecords = selected ? getSubmissionRecords(selected.id) : [];
-  const selectedReview = selected ? reviews[selected.fileName] : undefined;
-  const showRejections = Boolean(selectedReview && selectedReview.rejections.length > 0);
+  const selectedReviews = useAsync(selected ? `reviews|${selected.id}` : null, () =>
+    listSubmissionReviews(selected!.id),
+  );
 
   const collegeOptions = buildOptions(
     submissions.map((submission) => submission.college),
@@ -209,8 +188,12 @@ export function DataReviewPage() {
       (financialYear === ALL || submission.financialYear === financialYear) &&
       (status === ALL || submission.status === status),
   );
-  const totalPages = Math.ceil(filtered.length / pageSize);
+  const totalPages = Math.max(Math.ceil(filtered.length / pageSize), 1);
   const pageRows = filtered.slice((page - 1) * pageSize, page * pageSize);
+
+  let emptyMessage = 'No submissions match these filters.';
+  if (loaded.error) emptyMessage = loaded.error.message;
+  else if (!loaded.data) emptyMessage = 'Loading submissions…';
 
   const changeCollege = (value: string) => {
     setCollege(value);
@@ -227,7 +210,7 @@ export function DataReviewPage() {
     setPage(1);
   };
 
-  // DHET opens a full review page; TVET previews the flagged rows in an overlay.
+  // DHET opens a full review page; TVET sees DHET's decisions in an overlay.
   const openSubmission = (submission: Submission) => {
     if (extraFilters) navigate(PATHS.dataReviewSubmission(submission.id));
     else setSelected(submission);
@@ -290,7 +273,7 @@ export function DataReviewPage() {
             rows={pageRows}
             getRowKey={(row) => row.id}
             onRowClick={openSubmission}
-            emptyMessage="No submissions match these filters."
+            emptyMessage={emptyMessage}
             className={cn(extraFilters && styles.ruledTable)}
           />
           <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
@@ -304,43 +287,23 @@ export function DataReviewPage() {
       >
         {selected && (
           <div className={styles.details}>
-            <div className={styles.detailsHeader}>
-              <div className={styles.detailsStatus}>
-                <StatusBadge status={selected.status} />
-                {selectedReview && (
-                  <span className={styles.reviewNote}>
-                    Reviewed by {reviewerLabel(selectedReview)} ·{' '}
-                    {selectedReview.approvedCount}/{selectedReview.total} rows approved
-                  </span>
-                )}
-              </div>
-              <Button
-                variant="accent"
-                size="sm"
-                onClick={() =>
-                  selectedReview && showRejections
-                    ? downloadRejections(selected, selectedReview)
-                    : downloadRecords(selected, selectedRecords)
-                }
-              >
-                Download File
-              </Button>
+            <div className={styles.detailsStatus}>
+              <StatusBadge status={selected.status} />
+              <span className={styles.reviewNote}>
+                {selected.fileName} · {selected.tables.length}{' '}
+                {selected.tables.length === 1 ? 'table' : 'tables'}
+              </span>
             </div>
-            {selectedReview && showRejections ? (
-              <DataTable
-                columns={rejectionColumns(selectedReview)}
-                rows={selectedReview.rejections}
-                getRowKey={(row) => row.rowId}
-                className={cn(styles.recordsTable, styles.pinnedDecision)}
-              />
-            ) : (
-              <DataTable
-                columns={recordColumnsFor(selected)}
-                rows={selectedRecords}
-                getRowKey={(row) => String(row.rowNumber)}
-                className={styles.recordsTable}
-              />
+            {selectedReviews.loading && <p className={styles.reviewNote}>Loading decisions…</p>}
+            {selectedReviews.error && (
+              <p className={styles.reviewNote}>{selectedReviews.error.message}</p>
             )}
+            {selectedReviews.data?.length === 0 && (
+              <p className={styles.reviewNote}>DHET has not reviewed this submission yet.</p>
+            )}
+            {selectedReviews.data?.map((review) => (
+              <ReviewSection key={review.fileId} submission={selected} review={review} />
+            ))}
           </div>
         )}
       </Modal>

@@ -1,24 +1,16 @@
 import type { SubmissionStatus } from '@/components/StatusBadge';
 
+/** One college's data for one ingest date: its rows from every table that arrived that day. */
 export interface Submission {
   id: string;
-  /** ISO date (YYYY-MM-DD). */
+  /** ISO date (YYYY-MM-DD): the ingest date. */
   submittedOn: string;
   college: string;
   fileName: string;
   financialYear: string;
   status: SubmissionStatus;
-}
-
-/** One row inside a submitted file, as shown in the Data Review details overlay. */
-export interface SubmissionRecord {
-  rowNumber: number;
-  programmeCode: string;
-  programmeName: string;
-  fullTimeHeadcount: number;
-  partTimeHeadcount: number;
-  rejectedBy: string;
-  reason: string;
+  /** Tables in the submission, e.g. "staff_data". */
+  tables: string[];
 }
 
 /**
@@ -29,9 +21,11 @@ export interface SubmissionFile {
   id: string;
   /** Readable table name shown in the dropdown. */
   name: string;
-  /** Bucket path of the table's folder. */
+  /** Bucket path of the table's folder(s). */
   path: string;
   rowCount: number;
+  /** Set once DHET has decided on this table; it can then no longer be reviewed. */
+  review?: 'approved' | 'rejected';
 }
 
 /** A Parquet column as sent by the backend. */
@@ -78,10 +72,10 @@ export interface ReviewedRejection {
   reason: string;
 }
 
-/** A DHET decision on one table of a submission, as the TVET side sees it. */
+/** A DHET decision on one table of a submission. */
 export interface SubmissionReview {
-  /** The submission's file name; links the DHET and TVET views of the same submission. */
-  fileName: string;
+  /** The table (SubmissionFile id) the decision is about. */
+  fileId: string;
   tableName: string;
   /** Name of the DHET user who submitted the decision. */
   reviewer: string;

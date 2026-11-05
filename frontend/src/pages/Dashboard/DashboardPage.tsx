@@ -8,10 +8,9 @@ import {
   type KpiTone,
   type SubmissionStatus,
 } from '@/components';
-import { SUBMISSIONS } from '@/constants/mockSubmissions';
-import { useReviews } from '@/hooks/useReviews';
+import { useAsync } from '@/hooks/useAsync';
 import { DashboardLayout } from '@/layouts/DashboardLayout';
-import { statusAfterReview } from '@/services/reviewStore';
+import { listSubmissions } from '@/services/submissionService';
 import type { Submission } from '@/types/submission';
 import { formatDate } from '@/utils/formatDate';
 import styles from './DashboardPage.module.css';
@@ -57,15 +56,16 @@ export function DashboardPage() {
   const [page, setPage] = useState(1);
   const [activeFilter, setActiveFilter] = useState<StatusFilter>('all');
 
-  const reviews = useReviews();
-  // Counts and statuses reflect any DHET decision submitted since the data was loaded.
-  const submissions = SUBMISSIONS.map((submission) => ({
-    ...submission,
-    status: statusAfterReview(submission, reviews),
-  }));
+  // Statuses come from the DHET decisions stored by the backend.
+  const loaded = useAsync('submissions', listSubmissions);
+  const submissions = loaded.data ?? [];
 
   const filtered = submissions.filter(matches(activeFilter));
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const totalPages = Math.max(Math.ceil(filtered.length / PAGE_SIZE), 1);
+
+  let emptyMessage = 'No submissions with this status.';
+  if (loaded.error) emptyMessage = loaded.error.message;
+  else if (!loaded.data) emptyMessage = 'Loading submissions…';
   const pageRows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   // Clicking the active card again goes back to all submissions.
@@ -87,7 +87,7 @@ export function DashboardPage() {
         {KPI_FILTERS.map((filter) => (
           <KpiCard
             key={filter.id}
-            value={submissions.filter(matches(filter.id)).length}
+            value={loaded.data ? submissions.filter(matches(filter.id)).length : '–'}
             label={filter.label}
             tone={filter.tone}
             selected={activeFilter === filter.id}
@@ -103,7 +103,7 @@ export function DashboardPage() {
             columns={COLUMNS}
             rows={pageRows}
             getRowKey={(row) => row.id}
-            emptyMessage="No submissions with this status."
+            emptyMessage={emptyMessage}
           />
           <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
         </div>

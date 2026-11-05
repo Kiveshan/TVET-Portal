@@ -22,6 +22,48 @@ enum UserStatus {
   DISABLED
 }
 
+enum ReviewStatus {
+  APPROVED
+  REJECTED
+}
+
+/// A DHET decision on one table of a submission (one college's rows for one ingest date).
+/// Approved rows are copied to the approved bucket under `approved_key`.
+model SubmissionReview {
+  id             String       @id @default(uuid())
+  submission_id  String
+  college        String
+  ingest_date    String
+  table_name     String
+  status         ReviewStatus
+  approved_count Int
+  total_count    Int
+  /// Bucket key of the approved Parquet file; null when every row was rejected.
+  approved_key   String?
+
+  reviewer_id String
+  reviewer    User     @relation(fields: [reviewer_id], references: [id])
+  reviewed_at DateTime @default(now())
+
+  rejections RowRejection[]
+
+  @@unique([submission_id, table_name])
+  @@index([college])
+  @@map("submission_reviews")
+}
+
+/// A row DHET rejected, with the reason and a copy of the row so the college can see what was wrong.
+model RowRejection {
+  id        String           @id @default(uuid())
+  review_id String
+  review    SubmissionReview @relation(fields: [review_id], references: [id], onDelete: Cascade)
+  row_id    String
+  reason    String
+  values    Json
+
+  @@map("row_rejections")
+}
+
 model Institution {
   id    String @id @default(uuid())
   name  String @unique
@@ -61,6 +103,8 @@ model User {
   reviewed_by    User?     @relation("UserReviews", fields: [reviewed_by_id], references: [id])
   reviewedUsers  User[]    @relation("UserReviews")
   reviewed_at    DateTime?
+
+  submission_reviews SubmissionReview[]
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt

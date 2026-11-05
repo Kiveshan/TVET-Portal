@@ -1,12 +1,19 @@
 import { useCallback, useState } from 'react';
 import { Navigate, useLocation, useNavigate, useParams } from 'react-router-dom';
-import { Button, Card, DataTable, Icon, TextBox, Toast, type DataTableColumn } from '@/components';
+import {
+  Button,
+  Card,
+  DataTable,
+  Icon,
+  Pagination,
+  TextBox,
+  Toast,
+  type DataTableColumn,
+} from '@/components';
 import { useAsync } from '@/hooks/useAsync';
-import { useAuth } from '@/hooks/useAuth';
-import { useReviews } from '@/hooks/useReviews';
 import { DashboardLayout } from '@/layouts/DashboardLayout';
 import { PATHS } from '@/routes/paths';
-import { statusAfterReview } from '@/services/reviewStore';
+import { ApiError } from '@/services/apiClient';
 import {
   getFileRows,
   getSubmission,
@@ -19,17 +26,20 @@ import { downloadTable, toColumns } from '../SubmissionDetail/fileTable';
 import { FilePicker, SubmissionSummary } from '../SubmissionDetail/SubmissionSummary';
 import styles from './RejectionReasonsPage.module.css';
 
+/** Rows needing a reason can run into the thousands, so they are shown a page at a time. */
+const ROW_PAGE_SIZE = 50;
+
 export function RejectionReasonsPage() {
   const { submissionId = '' } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const reviews = useReviews();
   const selection = useLocation().state as ReviewSelectionState | null;
   const fileId = selection?.fileId ?? '';
 
   const [reasons, setReasons] = useState<Record<string, string>>({});
   const [showErrors, setShowErrors] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [rowPage, setRowPage] = useState(1);
   // Set once the decision is saved: the page locks and the success toast shows.
   const [result, setResult] = useState<{ approved: number; total: number } | null>(null);
   const [toastOpen, setToastOpen] = useState(false);
@@ -50,6 +60,8 @@ export function RejectionReasonsPage() {
   const reasonOf = (row: FileRow) => reasons[row.rowId]?.trim() ?? '';
   const filledCount = rejectedRows.filter((row) => reasonOf(row) !== '').length;
   const missingCount = rejectedRows.length - filledCount;
+  const rowPages = Math.max(Math.ceil(rejectedRows.length / ROW_PAGE_SIZE), 1);
+  const pageOfRows = rejectedRows.slice((rowPage - 1) * ROW_PAGE_SIZE, rowPage * ROW_PAGE_SIZE);
   const selectedFile = files.data?.find((file) => file.id === fileId);
   const details = submission.data;
 
@@ -75,21 +87,23 @@ export function RejectionReasonsPage() {
   const submit = async () => {
     if (missingCount > 0) {
       setShowErrors(true);
+      // Jump to the first page with a missing reason.
+      const firstMissing = rejectedRows.findIndex((row) => reasonOf(row) === '');
+      setRowPage(Math.floor(firstMissing / ROW_PAGE_SIZE) + 1);
       return;
     }
     setSubmitting(true);
+    setSubmitError(null);
     try {
-      await submitFileReview(
-        submissionId,
-        fileId,
-        {
-          approvedRowIds: selection.approvedRowIds,
-          rejections: rejectedRows.map((row) => ({ rowId: row.rowId, reason: reasonOf(row) })),
-        },
-        user?.name ?? 'DHET reviewer',
-      );
+      await submitFileReview(submissionId, fileId, {
+        approvedRowIds: selection.approvedRowIds,
+        rejections: rejectedRows.map((row) => ({ rowId: row.rowId, reason: reasonOf(row) })),
+      });
       setResult({ approved: approved.size, total: rows?.total ?? 0 });
       setToastOpen(true);
+    } catch (error) {
+      if (!(error instanceof ApiError)) throw error;
+      setSubmitError(error.message);
     } finally {
       setSubmitting(false);
     }
@@ -99,7 +113,8 @@ export function RejectionReasonsPage() {
     <DashboardLayout>
       {details ? (
         <SubmissionSummary
-          submission={{ ...details, status: statusAfterReview(details, reviews) }}
+          // A decision made here always rejects rows, which rejects the submission.
+          submission={result ? { ...details, status: 'rejected' } : details}
           onDownload={
             rows && selectedFile ? () => downloadTable(details, selectedFile.name, rows) : undefined
           }
@@ -118,11 +133,14 @@ export function RejectionReasonsPage() {
             <>
               <DataTable
                 columns={[...toColumns(rows), reasonColumn]}
-                rows={rejectedRows}
+                rows={pageOfRows}
                 getRowKey={(row) => row.rowId}
                 emptyMessage="All rows were approved; nothing to reject."
                 className={styles.rowsTable}
               />
+              {rowPages > 1 && (
+                <Pagination page={rowPage} totalPages={rowPages} onPageChange={setRowPage} />
+              )}
               {!result && (
                 <p
                   className={cn(styles.progress, showErrors && missingCount > 0 && styles.missing)}
@@ -136,6 +154,8 @@ export function RejectionReasonsPage() {
             </>
           )}
         </Card>
+
+        {submitError && <p className={styles.error}>{submitError}</p>}
 
         {!result && (
           <div className={styles.actions}>
