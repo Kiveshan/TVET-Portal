@@ -101,20 +101,27 @@ jobs:
             exit 1
           fi
 
-      # The circuit breaker rolls back if the new tasks don't become healthy, so check the
-      # service ended up on the new definition rather than just waiting for it to settle.
+      # The circuit breaker rolls back if the new tasks don't become healthy, so wait for this
+      # deployment's own rollout to finish rather than for the service to settle. ECS marks it
+      # COMPLETED a little after the old task has drained.
       - name: Roll out
         run: |
-          aws ecs update-service --cluster "$CLUSTER" --service "$SERVICE" \
-            --task-definition "${{ steps.taskdef.outputs.arn }}" >/dev/null
-          aws ecs wait services-stable --cluster "$CLUSTER" --services "$SERVICE"
-          RUNNING=$(aws ecs describe-services --cluster "$CLUSTER" --services "$SERVICE" \
-            --query 'services[0].deployments[?status==`PRIMARY`].[taskDefinition,rolloutState]' --output text)
-          echo "Primary deployment: $RUNNING"
-          case "$RUNNING" in
-            "${{ steps.taskdef.outputs.arn }}"*COMPLETED) ;;
-            *) echo "::error::The new version didn't become healthy and was rolled back."; exit 1 ;;
-          esac
+          DEPLOYMENT=$(aws ecs update-service --cluster "$CLUSTER" --service "$SERVICE" \
+            --task-definition "${{ steps.taskdef.outputs.arn }}" \
+            --query 'service.deployments[?status==`PRIMARY`].id' --output text)
+          echo "Deployment $DEPLOYMENT"
+          for _ in $(seq 1 60); do
+            STATE=$(aws ecs describe-services --cluster "$CLUSTER" --services "$SERVICE" \
+              --query "services[0].deployments[?id=='$DEPLOYMENT'].rolloutState | [0]" --output text)
+            case "$STATE" in
+              COMPLETED) echo "Rolled out."; exit 0 ;;
+              FAILED) echo "::error::The new version didn't become healthy and was rolled back."; exit 1 ;;
+              None) echo "::error::The deployment was replaced, probably rolled back."; exit 1 ;;
+            esac
+            sleep 15
+          done
+          echo "::error::Rollout still $STATE after 15 minutes."
+          exit 1
 
       - name: Check the site
         run: curl --fail --silent --show-error --retry 5 --retry-delay 5 "$SITE_URL/api/health"
