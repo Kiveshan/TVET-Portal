@@ -23,7 +23,22 @@ variable "vpc_cidr" {
 # --- Application ---
 
 variable "image_tag" {
-  description = "Tag of the image in ECR to run. Deploy a new version by applying with a new tag."
+  description = <<-EOT
+    Tag of the image in ECR to run. Leave unset to keep whatever image is deployed now, which is
+    how GitHub Actions deploys: it updates the service itself. Required for a new environment.
+  EOT
+  type        = string
+  default     = null
+}
+
+variable "github_repository" {
+  description = "Repository whose workflows may deploy, as owner/name."
+  type        = string
+  default     = "Kiveshan/TVET-Portal"
+}
+
+variable "deploy_branch" {
+  description = "Branch whose pushes deploy to this environment."
   type        = string
 }
 

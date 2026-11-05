@@ -1,5 +1,8 @@
 environment = "staging"
 
+# Pushes to this branch deploy here (.github/workflows/deploy.yml).
+deploy_branch = "staging"
+
 ingestion_bucket = "dhet-ingestion-landing-515966540182"
 approved_bucket  = "dhet-approved"
 
