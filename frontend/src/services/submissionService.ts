@@ -1,108 +1,52 @@
-import { bucketFolder, getMockTables, type MockTable } from '@/constants/mockSubmissionFiles';
-import { ALL_COLLEGE_SUBMISSIONS, SUBMISSIONS } from '@/constants/mockSubmissions';
 import type {
   FileReviewDecision,
   FileTable,
   Submission,
   SubmissionFile,
+  SubmissionReview,
 } from '@/types/submission';
-import { readParquet, readParquetRowCount, type ParquetContents } from './parquetReader';
-import { reviewStore } from './reviewStore';
+import { api } from './apiClient';
 
-// Frontend-only stubs. Replace with real API calls once the backend exists:
-//   GET  /submissions/:id
-//   GET  /submissions/:id/files
-//   GET  /submissions/:id/files/:fileId/rows
-//   POST /submissions/:id/files/:fileId/review
+// Submissions come from the S3 ingestion bucket: one per college per ingest date.
+// TVET users only get their own college's submissions; DHET gets every college.
 
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+const base = (submissionId: string) => `/submissions/${encodeURIComponent(submissionId)}`;
+const fileBase = (submissionId: string, fileId: string) =>
+  `${base(submissionId)}/files/${encodeURIComponent(fileId)}`;
 
-export class NotFoundError extends Error {
-  constructor(what: string) {
-    super(`${what} not found`);
-    this.name = 'NotFoundError';
-  }
-}
-
-function findSubmission(submissionId: string): Submission {
-  const submission = [...ALL_COLLEGE_SUBMISSIONS, ...SUBMISSIONS].find(
-    (candidate) => candidate.id === submissionId,
-  );
-  if (!submission) throw new NotFoundError('Submission');
-  return submission;
-}
-
-/** "Provider_Postal_Address_1" -> "Provider Postal Address 1" */
-function toLabel(column: string): string {
-  return column.replace(/_/g, ' ');
-}
-
-/** Columns + rows of a mock table, decoding the Parquet file when there is one. */
-function loadTable(table: MockTable): Promise<ParquetContents> {
-  if ('parquetUrl' in table) return readParquet(table.parquetUrl);
-  return Promise.resolve({ columns: table.columns, rows: table.rows });
+/** Newest first, with each submission's review status. */
+export async function listSubmissions(): Promise<Submission[]> {
+  const { submissions } = await api<{ submissions: Submission[] }>('/submissions');
+  return submissions;
 }
 
 export async function getSubmission(submissionId: string): Promise<Submission> {
-  await delay(200);
-  return findSubmission(submissionId);
+  const { submission } = await api<{ submission: Submission }>(base(submissionId));
+  return submission;
 }
 
-/** Tables in the submission's bucket folder (one entry per table, not per Parquet part). */
+/** Tables in the submission (one entry per table, not per Parquet part). */
 export async function listSubmissionFiles(submissionId: string): Promise<SubmissionFile[]> {
-  await delay(300);
-  const submission = findSubmission(submissionId);
-  return Promise.all(
-    getMockTables(submission).map(async (table) => ({
-      id: table.folder,
-      name: table.name,
-      path: `${bucketFolder(submission)}/${table.folder}/`,
-      rowCount:
-        'parquetUrl' in table ? await readParquetRowCount(table.parquetUrl) : table.rows.length,
-    })),
-  );
+  const { files } = await api<{ files: SubmissionFile[] }>(`${base(submissionId)}/files`);
+  return files;
 }
 
-/** Rows of one table, already joined from its Parquet parts and converted to JSON. */
-export async function getFileRows(submissionId: string, fileId: string): Promise<FileTable> {
-  await delay(500);
-  const table = getMockTables(findSubmission(submissionId)).find((t) => t.folder === fileId);
-  if (!table) throw new NotFoundError('File');
-  const { columns, rows } = await loadTable(table);
-  return {
-    columns: columns.map((key) => ({ key, label: toLabel(key) })),
-    rows: rows.map((values, index) => ({ rowId: String(values.RecId ?? index + 1), values })),
-    total: rows.length,
-  };
+/** Rows of one table for the submission's college, joined from its Parquet parts. */
+export function getFileRows(submissionId: string, fileId: string): Promise<FileTable> {
+  return api<FileTable>(`${fileBase(submissionId, fileId)}/rows`);
 }
 
-/** Saves a DHET decision; the TVET side then sees the status, rejected rows and reasons. */
+/** DHET decisions on the submission's tables, with rejected rows and their reasons. */
+export async function listSubmissionReviews(submissionId: string): Promise<SubmissionReview[]> {
+  const { reviews } = await api<{ reviews: SubmissionReview[] }>(`${base(submissionId)}/reviews`);
+  return reviews;
+}
+
+/** DHET only. Approved rows are copied to the approved bucket; rejected rows keep their reasons. */
 export async function submitFileReview(
   submissionId: string,
   fileId: string,
   decision: FileReviewDecision,
-  reviewer: string,
 ): Promise<void> {
-  await delay(500);
-  const submission = findSubmission(submissionId);
-  const table = getMockTables(submission).find((t) => t.folder === fileId);
-  if (!table) throw new NotFoundError('File');
-  const { columns, rows } = await loadTable(table);
-  const valuesById = new Map(rows.map((values, index) => [String(values.RecId ?? index + 1), values]));
-
-  reviewStore.save({
-    fileName: submission.fileName,
-    tableName: table.name,
-    reviewer,
-    reviewedAt: new Date().toISOString(),
-    status: decision.rejections.length > 0 ? 'rejected' : 'approved',
-    approvedCount: decision.approvedRowIds.length,
-    total: rows.length,
-    columns: columns.map((key) => ({ key, label: toLabel(key) })),
-    rejections: decision.rejections.map(({ rowId, reason }) => ({
-      rowId,
-      reason,
-      values: valuesById.get(rowId) ?? {},
-    })),
-  });
+  await api(`${fileBase(submissionId, fileId)}/review`, { method: 'POST', body: decision });
 }

@@ -1,26 +1,29 @@
 import { useCallback, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { Button, Card, Checkbox, DataTable, Icon, Modal, Toast } from '@/components';
+import { Button, Card, Checkbox, DataTable, Icon, Modal, Pagination, Toast } from '@/components';
 import { useAsync } from '@/hooks/useAsync';
-import { useAuth } from '@/hooks/useAuth';
-import { useReviews } from '@/hooks/useReviews';
 import { DashboardLayout } from '@/layouts/DashboardLayout';
 import { PATHS } from '@/routes/paths';
-import { statusAfterReview } from '@/services/reviewStore';
+import { ApiError } from '@/services/apiClient';
 import {
   getFileRows,
   getSubmission,
   listSubmissionFiles,
+  listSubmissionReviews,
   submitFileReview,
 } from '@/services/submissionService';
 import type { ReviewSelectionState } from '@/types/submission';
 import { cn } from '@/utils/classNames';
+import { formatDateTime } from '@/utils/formatDate';
 import { downloadTable, toColumns } from './fileTable';
 import { BackToDataReview, FilePicker, SubmissionSummary } from './SubmissionSummary';
 import styles from './SubmissionDetailPage.module.css';
 
 /** "1 row" / "4 rows" */
 const rowCount = (count: number) => `${count} ${count === 1 ? 'row' : 'rows'}`;
+
+/** Tables can hold tens of thousands of rows, so only one page of them is drawn at a time. */
+const ROW_PAGE_SIZE = 50;
 
 /** Ticks belong to one file, so switching file starts with none ticked. */
 interface Selection {
@@ -31,12 +34,15 @@ interface Selection {
 export function SubmissionDetailPage() {
   const { submissionId = '' } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const reviews = useReviews();
   // Coming back from the rejection step restores the file and ticks.
   const returning = useLocation().state as ReviewSelectionState | null;
 
-  const [fileId, setFileId] = useState(returning?.fileId ?? '');
+  const [fileId, setFileIdState] = useState(returning?.fileId ?? '');
+  const [rowPage, setRowPage] = useState(1);
+  const setFileId = (id: string) => {
+    setFileIdState(id);
+    setRowPage(1);
+  };
   const [selection, setSelection] = useState<Selection | null>(
     returning ? { fileId: returning.fileId, keys: new Set(returning.approvedRowIds) } : null,
   );
@@ -45,10 +51,20 @@ export function SubmissionDetailPage() {
   // A file whose rows were all approved and submitted here (no rejection step needed).
   const [approvedFileId, setApprovedFileId] = useState<string | null>(null);
   const [toastOpen, setToastOpen] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const closeToast = useCallback(() => setToastOpen(false), []);
+  // Bumped after a decision is saved, so status, files and history are fetched again.
+  const [version, setVersion] = useState(0);
 
-  const submission = useAsync(submissionId, () => getSubmission(submissionId));
-  const files = useAsync(submissionId, () => listSubmissionFiles(submissionId));
+  const submission = useAsync(`${submissionId}|${version}`, () => getSubmission(submissionId), {
+    keepPreviousData: true,
+  });
+  const files = useAsync(`${submissionId}|${version}`, () => listSubmissionFiles(submissionId), {
+    keepPreviousData: true,
+  });
+  const reviews = useAsync(`${submissionId}|${version}`, () => listSubmissionReviews(submissionId), {
+    keepPreviousData: true,
+  });
   const table = useAsync(fileId ? `${submissionId}/${fileId}` : null, () =>
     getFileRows(submissionId, fileId),
   );
@@ -80,8 +96,10 @@ export function SubmissionDetailPage() {
   const approvedCount = selectedKeys.size;
   const remaining = total - approvedCount;
   const allApproved = total > 0 && remaining === 0;
-  // Once submitted, the file's ticks and actions are locked.
-  const locked = approvedFileId !== null && approvedFileId === fileId;
+  // A table DHET already decided on (here or earlier) is locked: its ticks and actions are disabled.
+  const locked = Boolean(selectedFile?.review) || (approvedFileId !== null && approvedFileId === fileId);
+  const rowPages = Math.max(Math.ceil(total / ROW_PAGE_SIZE), 1);
+  const pageOfRows = rows?.rows.slice((rowPage - 1) * ROW_PAGE_SIZE, rowPage * ROW_PAGE_SIZE) ?? [];
 
   const setSelectedKeys = (keys: Set<string>) => {
     if (!locked) setSelection({ fileId, keys });
@@ -97,16 +115,20 @@ export function SubmissionDetailPage() {
   // Every row approved: nothing to reject, so submit straight from here.
   const submitApproval = async () => {
     setSubmitting(true);
+    setSubmitError(null);
     try {
-      await submitFileReview(
-        submissionId,
-        fileId,
-        { approvedRowIds: [...selectedKeys], rejections: [] },
-        user?.name ?? 'DHET reviewer',
-      );
+      await submitFileReview(submissionId, fileId, {
+        approvedRowIds: [...selectedKeys],
+        rejections: [],
+      });
       setConfirming(false);
       setApprovedFileId(fileId);
       setToastOpen(true);
+      setVersion((current) => current + 1);
+    } catch (error) {
+      if (!(error instanceof ApiError)) throw error;
+      setConfirming(false);
+      setSubmitError(error.message);
     } finally {
       setSubmitting(false);
     }
@@ -115,7 +137,7 @@ export function SubmissionDetailPage() {
   return (
     <DashboardLayout>
       <SubmissionSummary
-        submission={{ ...details, status: statusAfterReview(details, reviews) }}
+        submission={details}
         onDownload={
           rows && selectedFile ? () => downloadTable(details, selectedFile.name, rows) : undefined
         }
@@ -140,23 +162,30 @@ export function SubmissionDetailPage() {
                 />
                 <DataTable
                   columns={toColumns(rows)}
-                  rows={rows.rows}
+                  rows={pageOfRows}
                   getRowKey={(row) => row.rowId}
                   selectedKeys={selectedKeys}
                   onSelectionChange={setSelectedKeys}
                   selectionHeader="Approve"
                   className={styles.rowsTable}
                 />
+                {rowPages > 1 && (
+                  <Pagination page={rowPage} totalPages={rowPages} onPageChange={setRowPage} />
+                )}
                 <p className={styles.selectionNote} aria-live="polite">
                   <Icon name="alert" size={13} />
-                  {approvedCount}/{total} rows have been selected, {remaining}{' '}
-                  {remaining === 1 ? 'is' : 'are'} remaining for
-                  rejection
+                  {selectedFile?.review
+                    ? `This file has already been ${selectedFile.review}.`
+                    : `${approvedCount}/${total} rows have been selected, ${remaining} ${
+                        remaining === 1 ? 'is' : 'are'
+                      } remaining for rejection`}
                 </p>
               </>
             )}
           </Card>
         )}
+
+        {submitError && <p className={styles.error}>{submitError}</p>}
 
         {rows && !locked && (
           <div className={styles.actions}>
@@ -189,7 +218,19 @@ export function SubmissionDetailPage() {
             Review History
           </h2>
           <Card className={styles.panel}>
-            <p className={styles.muted}>No decisions recorded for this submission yet.</p>
+            {reviews.data && reviews.data.length > 0 ? (
+              reviews.data.map((review) => (
+                <p key={review.fileId} className={styles.muted}>
+                  <strong>{review.tableName}</strong>: {review.status} by {review.reviewer} on{' '}
+                  {formatDateTime(review.reviewedAt)} ({review.approvedCount}/{review.total} rows
+                  approved)
+                </p>
+              ))
+            ) : (
+              <p className={styles.muted}>
+                {reviews.data ? 'No decisions recorded for this submission yet.' : 'Loading…'}
+              </p>
+            )}
           </Card>
         </section>
       )}

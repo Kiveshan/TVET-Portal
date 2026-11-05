@@ -15,10 +15,12 @@ function fileTypeOf(fileName: string): string {
   return FILE_TYPES[extension] ?? extension.toUpperCase();
 }
 
-function datasetOf(fileName: string): string {
-  if (fileName.includes('achievement')) return 'Achievement statistics';
-  if (fileName.includes('campus')) return 'Campus / provider details';
-  return 'Enrolment headcount statistics';
+/** ["staff_data", "student_data"] -> "Staff data, Student data" */
+function datasetOf(tables: string[]): string {
+  return tables
+    .map((table) => table.replace(/_/g, ' '))
+    .map((name) => name.charAt(0).toUpperCase() + name.slice(1))
+    .join(', ');
 }
 
 export function BackToDataReview() {
@@ -73,7 +75,7 @@ export function SubmissionSummary({ submission, onDownload }: SubmissionSummaryP
             {formatDate(submission.submittedOn)}
           </DetailTile>
           <DetailTile label="Dataset" className={styles.detail}>
-            {datasetOf(submission.fileName)}
+            {datasetOf(submission.tables)}
           </DetailTile>
           <DetailTile label="Version" className={styles.detail}>
             v1 (original)
