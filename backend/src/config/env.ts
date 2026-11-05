@@ -5,6 +5,10 @@ import { z } from 'zod';
 const EnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   PORT: z.coerce.number().int().positive().default(4000),
+  /** Proxies in front of the app (1 behind a load balancer), so req.ip is the client's address, not the proxy's. */
+  TRUST_PROXY: z.coerce.number().int().min(0).default(0),
+  /** The built frontend (frontend/dist). When set, the app serves the site as well as the API. */
+  STATIC_DIR: z.string().optional(),
   DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
   // The AWS SDK reads AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY from the environment itself.
