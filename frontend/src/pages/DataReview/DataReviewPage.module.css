@@ -19,7 +19,8 @@
 /* Filter panel: Card restyled to the compact, bordered look of the dashboard. */
 .filters {
   display: flex;
-  align-items: center;
+  /* Bottom-aligned so Clear Filters lines up with the dropdown boxes, not their labels */
+  align-items: flex-end;
   justify-content: space-between;
   gap: 16px;
   width: auto;
@@ -32,28 +33,45 @@
   backdrop-filter: none;
 }
 
+/* All filters sit on one row; fields shrink rather than wrap. */
 .filterGroup {
   display: flex;
-  flex-wrap: wrap;
-  gap: 16px clamp(24px, 5vw, 60px);
+  flex: 1;
+  flex-wrap: nowrap;
+  gap: clamp(12px, 2vw, 24px);
+  min-width: 0;
 }
 
 /* Compact restyle of the shared Dropdown for the filter bar */
 .filterField {
   --control-height: 30px;
   --field-gap: 6px;
+  min-width: 0;
+}
+
+/* Narrow screens truncate labels and values instead of wrapping them */
+.filterField label,
+.filterField select,
+.filterField input {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.providerField {
+  flex: 0 1 180px;
 }
 
 .collegeField {
-  width: 240px;
+  flex: 0 1 240px;
 }
 
 .yearField {
-  width: 140px;
+  flex: 0 1 140px;
 }
 
 .statusField {
-  width: 160px;
+  flex: 0 1 160px;
 }
 
 .filterField label {
@@ -115,34 +133,6 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
-}
-
-/* DHET rejections: keep "Rejected By" and "Reason" in view while scrolling the file's columns */
-.pinnedDecision th:nth-last-child(-n + 2),
-.pinnedDecision td:nth-last-child(-n + 2) {
-  position: sticky;
-  background: var(--color-white);
-}
-
-.pinnedDecision th:nth-last-child(-n + 2) {
-  z-index: 2;
-  background: var(--color-table-head);
-}
-
-.pinnedDecision th:last-child,
-.pinnedDecision td:last-child {
-  right: 0;
-  /* Fixed width so the "Rejected By" column can sit exactly beside it */
-  width: 200px;
-  min-width: 200px;
-  max-width: 200px;
-  white-space: normal;
-}
-
-.pinnedDecision th:nth-last-child(2),
-.pinnedDecision td:nth-last-child(2) {
-  right: 200px;
-  box-shadow: -8px 0 8px -8px rgba(23, 26, 31, 0.18);
 }
 
 .detailsHeader {

@@ -65,7 +65,7 @@ const statusColumn: DataTableColumn<Submission> = {
 interface ReviewView {
   title: string;
   pageSize: number;
-  /** DHET also filters by college and status. */
+  /** DHET also filters by service provider, college and status. */
   extraFilters: boolean;
   sectionTitle?: string;
   columns: DataTableColumn<Submission>[];
@@ -147,7 +147,7 @@ function ReviewSection({ submission, review }: { submission: Submission; review:
           columns={rejectionColumns(review)}
           rows={review.rejections}
           getRowKey={(row) => row.rowId}
-          className={cn(styles.recordsTable, styles.pinnedDecision)}
+          className={styles.recordsTable}
         />
       )}
     </div>
@@ -163,6 +163,7 @@ export function DataReviewPage() {
   const loaded = useAsync('submissions', listSubmissions);
   const submissions = loaded.data ?? [];
 
+  const [serviceProvider, setServiceProvider] = useState(ALL);
   const [college, setCollege] = useState(ALL);
   const [financialYear, setFinancialYear] = useState(ALL);
   const [status, setStatus] = useState<StatusFilter>(ALL);
@@ -172,8 +173,15 @@ export function DataReviewPage() {
     listSubmissionReviews(selected!.id),
   );
 
+  const providerOptions = buildOptions(
+    submissions.flatMap((submission) => submission.serviceProviders),
+    'All service providers',
+  );
+  // Colleges narrow to the chosen service provider, so the list only offers ones it serves.
   const collegeOptions = buildOptions(
-    submissions.map((submission) => submission.college),
+    submissions
+      .filter((submission) => serviceProvider === ALL || submission.serviceProviders.includes(serviceProvider))
+      .map((submission) => submission.college),
     'All colleges',
   );
   const yearOptions = buildOptions(
@@ -184,6 +192,7 @@ export function DataReviewPage() {
 
   const filtered = submissions.filter(
     (submission) =>
+      (serviceProvider === ALL || submission.serviceProviders.includes(serviceProvider)) &&
       (college === ALL || submission.college === college) &&
       (financialYear === ALL || submission.financialYear === financialYear) &&
       (status === ALL || submission.status === status),
@@ -194,6 +203,13 @@ export function DataReviewPage() {
   let emptyMessage = 'No submissions match these filters.';
   if (loaded.error) emptyMessage = loaded.error.message;
   else if (!loaded.data) emptyMessage = 'Loading submissions…';
+
+  // A college picked under another service provider would hide everything, so it is reset.
+  const changeServiceProvider = (value: string) => {
+    setServiceProvider(value);
+    setCollege(ALL);
+    setPage(1);
+  };
 
   const changeCollege = (value: string) => {
     setCollege(value);
@@ -217,6 +233,7 @@ export function DataReviewPage() {
   };
 
   const clearFilters = () => {
+    setServiceProvider(ALL);
     setCollege(ALL);
     setFinancialYear(ALL);
     setStatus(ALL);
@@ -232,6 +249,15 @@ export function DataReviewPage() {
 
       <Card className={styles.filters}>
         <div className={styles.filterGroup}>
+          {extraFilters && (
+            <Dropdown
+              label="Service Provider"
+              options={providerOptions}
+              value={serviceProvider}
+              onChange={(e) => changeServiceProvider(e.target.value)}
+              containerClassName={cn(styles.filterField, styles.providerField)}
+            />
+          )}
           {extraFilters && (
             <Dropdown
               label="College"

@@ -11,6 +11,8 @@ export interface Submission {
   status: SubmissionStatus;
   /** Tables in the submission, e.g. "staff_data". */
   tables: string[];
+  /** The data feeds the rows came from (bucket `client=` prefix, e.g. "coltech"). */
+  serviceProviders: string[];
 }
 
 /**

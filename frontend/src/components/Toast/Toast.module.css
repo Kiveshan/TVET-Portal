@@ -10,20 +10,27 @@
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-toast);
   animation: slideIn 220ms ease-out;
+  /* Eases back after a short drag, and slides off from its current spot when dismissed */
+  transition:
+    transform 220ms ease-in,
+    opacity 220ms ease-in;
   /* Allows vertical page scrolling on touch screens while still catching horizontal swipes */
   touch-action: pan-y;
   cursor: grab;
   user-select: none;
 }
 
+/* Follows the pointer exactly while dragging */
 .dragging {
   cursor: grabbing;
   opacity: 0.9;
+  transition: none;
 }
 
-/* Slides off to the right when dismissed (×, swipe or timeout) */
+/* Slides off to the right when dismissed (×, swipe or timeout); position set inline */
 .leaving {
-  animation: slideOut 200ms ease-in forwards;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .iconPanel {
@@ -76,16 +83,9 @@
   }
 }
 
-@keyframes slideOut {
-  to {
-    opacity: 0;
-    transform: translateX(110%);
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .toast,
-  .leaving {
+  .toast {
     animation-duration: 1ms;
+    transition-duration: 1ms;
   }
 }
