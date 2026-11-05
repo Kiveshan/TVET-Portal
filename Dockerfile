@@ -12,6 +12,8 @@ FROM node:22-slim
 # The Prisma CLI (used for migrations) needs OpenSSL.
 RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates \
     && rm -rf /var/lib/apt/lists/*
+# RDS requires TLS, and node-postgres verifies the certificate, so Node needs Amazon's RDS CA.
+ADD --chmod=644 https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem /etc/ssl/certs/rds-global-bundle.pem
 WORKDIR /app
 COPY backend/package.json backend/package-lock.json ./
 # Dev dependencies stay in: the server runs through tsx, and migrations need the Prisma CLI.
@@ -24,7 +26,8 @@ COPY --from=frontend /app/frontend/dist ./public
 ENV NODE_ENV=production \
     PORT=4000 \
     STATIC_DIR=/app/public \
-    TRUST_PROXY=1
+    TRUST_PROXY=1 \
+    NODE_EXTRA_CA_CERTS=/etc/ssl/certs/rds-global-bundle.pem
 EXPOSE 4000
 USER node
 # Run migrations as a one-off task with the command: npx prisma migrate deploy
