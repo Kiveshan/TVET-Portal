@@ -31,6 +31,8 @@ export interface Submission {
   status: ApiStatus;
   /** Tables in the submission, e.g. "staff_data". */
   tables: string[];
+  /** The data feeds (bucket `client=` prefix, e.g. "coltech") the rows came from. */
+  serviceProviders: string[];
 }
 
 interface SubmissionGroup {
@@ -38,6 +40,7 @@ interface SubmissionGroup {
   college: string;
   ingestDate: string;
   providerCodes: Set<string>;
+  serviceProviders: Set<string>;
   /** Table name -> the runs that landed that day. */
   runs: Map<string, Run[]>;
 }
@@ -115,10 +118,18 @@ async function loadGroups(): Promise<SubmissionGroup[]> {
       const id = `${run.ingestDate}--${slug(college)}`;
       let group = groups.get(id);
       if (!group) {
-        group = { id, college, ingestDate: run.ingestDate, providerCodes: new Set(), runs: new Map() };
+        group = {
+          id,
+          college,
+          ingestDate: run.ingestDate,
+          providerCodes: new Set(),
+          serviceProviders: new Set(),
+          runs: new Map(),
+        };
         groups.set(id, group);
       }
       group.providerCodes.add(code);
+      group.serviceProviders.add(run.client);
       const tableRuns = group.runs.get(run.table) ?? [];
       if (!tableRuns.includes(run)) tableRuns.push(run);
       group.runs.set(run.table, tableRuns);
@@ -180,6 +191,7 @@ function toSubmission(group: SubmissionGroup, decisions: Map<string, ReviewStatu
     financialYear: financialYear(group.ingestDate),
     status: statusOf(group, decisions),
     tables: [...group.runs.keys()].sort(),
+    serviceProviders: [...group.serviceProviders].sort(),
   };
 }
 

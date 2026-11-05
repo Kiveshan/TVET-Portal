@@ -14,8 +14,8 @@ export interface ToastProps {
 
 /** Dragging further right than this dismisses the toast. */
 const SWIPE_DISMISS_PX = 80;
-/** Matches the slide-out animation in Toast.module.css. */
-const LEAVE_MS = 200;
+/** Matches the transition in Toast.module.css. */
+const LEAVE_MS = 220;
 
 /**
  * Slides in at the top right and stays until dismissed with × or by swiping it to the right
@@ -29,6 +29,7 @@ export function Toast({ open, ...props }: ToastProps) {
 function ToastCard({ title, message, duration = 0, onClose }: Omit<ToastProps, 'open'>) {
   const [leaving, setLeaving] = useState(false);
   const [offset, setOffset] = useState(0);
+  const [dragging, setDragging] = useState(false);
   const dragStart = useRef<number | null>(null);
 
   const dismiss = () => setLeaving(true);
@@ -39,8 +40,8 @@ function ToastCard({ title, message, duration = 0, onClose }: Omit<ToastProps, '
     return () => window.clearTimeout(timer);
   }, [duration]);
 
-  // Close once the slide-out has played. A timer rather than animationend, which never
-  // fires if animations are paused (e.g. a background tab).
+  // Close once the slide-out has played. A timer rather than transitionend, which never
+  // fires if nothing actually moves (e.g. a background tab).
   useEffect(() => {
     if (!leaving) return;
     const timer = window.setTimeout(onClose, LEAVE_MS);
@@ -49,7 +50,9 @@ function ToastCard({ title, message, duration = 0, onClose }: Omit<ToastProps, '
 
   const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
     if ((event.target as HTMLElement).closest('button')) return;
+    if (leaving) return;
     dragStart.current = event.clientX;
+    setDragging(true);
     event.currentTarget.setPointerCapture(event.pointerId);
   };
 
@@ -59,19 +62,26 @@ function ToastCard({ title, message, duration = 0, onClose }: Omit<ToastProps, '
     setOffset(Math.max(0, event.clientX - dragStart.current));
   };
 
+  // Let go past the threshold: slides on out from where it is. Otherwise: eases back into place.
   const onPointerEnd = () => {
     if (dragStart.current === null) return;
     dragStart.current = null;
+    setDragging(false);
     if (offset > SWIPE_DISMISS_PX) dismiss();
     else setOffset(0);
   };
 
+  // Position is driven by transitions, so leaving always starts from wherever the toast is.
+  let transform: string | undefined;
+  if (leaving) transform = 'translateX(calc(100% + 32px))';
+  else if (offset > 0) transform = `translateX(${offset}px)`;
+
   return (
     <div
-      className={cn(styles.toast, leaving && styles.leaving, offset > 0 && styles.dragging)}
+      className={cn(styles.toast, leaving && styles.leaving, dragging && styles.dragging)}
       role="status"
       aria-live="polite"
-      style={offset > 0 && !leaving ? { transform: `translateX(${offset}px)` } : undefined}
+      style={transform ? { transform } : undefined}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerEnd}
