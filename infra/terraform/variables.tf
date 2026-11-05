@@ -37,10 +37,17 @@ variable "approved_bucket" {
   type        = string
 }
 
-variable "certificate_arn" {
+variable "hosted_zone_name" {
+  description = "Public Route 53 zone in this account that the portal's name lives in."
+  type        = string
+  default     = "tvet-portal.co.za"
+}
+
+variable "domain_name" {
   description = <<-EOT
-    ACM certificate (in the same region) for the portal's domain. Without one the load balancer
-    serves plain HTTP, and sign-in won't work: the session cookie is Secure in production.
+    The portal's address, e.g. staging.tvet-portal.co.za. Terraform issues its certificate and
+    points it at the load balancer. Leave empty to serve plain HTTP on the load balancer's own
+    name, but then sign-in won't work: the session cookie is Secure in production.
   EOT
   type        = string
   default     = ""

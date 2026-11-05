@@ -1,6 +1,5 @@
 output "url" {
-  description = "Point the portal's DNS name (CNAME or alias) at this."
-  value       = "${local.https ? "https" : "http"}://${aws_lb.main.dns_name}"
+  value = local.https ? "https://${var.domain_name}" : "http://${aws_lb.main.dns_name}"
 }
 
 output "ecr_repository_url" {
