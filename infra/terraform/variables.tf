@@ -37,6 +37,12 @@ variable "github_repository" {
   default     = "Kiveshan/TVET-Portal"
 }
 
+variable "github_subject_prefix" {
+  description = "sub_claim_prefix from: gh api repos/<owner>/<repo>/actions/oidc/customization/sub"
+  type        = string
+  default     = "repo:Kiveshan@102474568/TVET-Portal@1435463757"
+}
+
 variable "deploy_branch" {
   description = "Branch whose pushes deploy to this environment."
   type        = string

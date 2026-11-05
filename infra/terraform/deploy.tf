@@ -22,11 +22,16 @@ data "aws_iam_policy_document" "deploy_assume" {
       values   = ["sts.amazonaws.com"]
     }
 
-    # Only workflows running on the deploy branch of this repository.
+    # Only workflows running on the deploy branch of this repository. The repository uses
+    # GitHub's immutable subject (owner and repo ids, which survive renames); the plain
+    # name form is kept in case that setting is switched off.
     condition {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:${var.github_repository}:ref:refs/heads/${var.deploy_branch}"]
+      values = [
+        "${var.github_subject_prefix}:ref:refs/heads/${var.deploy_branch}",
+        "repo:${var.github_repository}:ref:refs/heads/${var.deploy_branch}",
+      ]
     }
   }
 }
