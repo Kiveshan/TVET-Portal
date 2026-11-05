@@ -1,0 +1,127 @@
+name: Deploy staging
+
+on:
+  push:
+    branches: [staging]
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      - 'Dockerfile'
+      - '.dockerignore'
+      - '.github/workflows/deploy.yml'
+  workflow_dispatch:
+
+# One deploy at a time, and never cancel one half-way through a migration.
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: false
+
+permissions:
+  id-token: write # to sign in to AWS with GitHub's OIDC token, no stored keys
+  contents: read
+
+env:
+  AWS_REGION: af-south-1
+  # From `terraform output deploy_role_arn`. It only trusts workflows on the staging branch.
+  AWS_ROLE_ARN: arn:aws:iam::515966540182:role/tvet-portal-staging-github-deploy
+  ECR_REPOSITORY: tvet-portal-staging
+  CLUSTER: tvet-portal-staging
+  SERVICE: portal
+  CONTAINER: portal
+  SITE_URL: https://staging.tvet-portal.co.za
+
+jobs:
+  deploy:
+    name: Build, migrate & roll out
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # Tags are immutable, so a re-run of the same commit reuses the image it already pushed.
+      - name: Build and push image
+        id: image
+        run: |
+          TAG="${GITHUB_SHA::7}"
+          IMAGE="${{ steps.ecr.outputs.registry }}/$ECR_REPOSITORY:$TAG"
+          echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
+          if aws ecr describe-images --repository-name "$ECR_REPOSITORY" --image-ids imageTag="$TAG" >/dev/null 2>&1; then
+            echo "Image $TAG already in ECR, skipping build."
+          else
+            docker build -t "$IMAGE" .
+            docker push "$IMAGE"
+          fi
+
+      # Start from the task definition the service runs now, so settings Terraform manages
+      # (environment, secrets, roles, sizes) carry over, and only the image changes.
+      - name: Register task definition
+        id: taskdef
+        run: |
+          CURRENT=$(aws ecs describe-services --cluster "$CLUSTER" --services "$SERVICE" \
+            --query 'services[0].taskDefinition' --output text)
+          aws ecs describe-task-definition --task-definition "$CURRENT" --query taskDefinition \
+            | jq --arg image "${{ steps.image.outputs.image }}" --arg name "$CONTAINER" '
+                del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities,
+                    .registeredAt, .registeredBy, .deregisteredAt)
+                | .containerDefinitions |= map(if .name == $name then .image = $image else . end)' \
+            > taskdef.json
+          ARN=$(aws ecs register-task-definition --cli-input-json file://taskdef.json \
+            --query taskDefinition.taskDefinitionArn --output text)
+          echo "Registered $ARN"
+          echo "arn=$ARN" >> "$GITHUB_OUTPUT"
+
+      # Before the new version starts serving, so it never runs against an old schema.
+      - name: Run migrations
+        run: |
+          NETWORK=$(aws ecs describe-services --cluster "$CLUSTER" --services "$SERVICE" \
+            --query 'services[0].networkConfiguration' --output json)
+          TASK=$(aws ecs run-task --cluster "$CLUSTER" --launch-type FARGATE \
+            --task-definition "${{ steps.taskdef.outputs.arn }}" \
+            --network-configuration "$NETWORK" \
+            --overrides "{\"containerOverrides\":[{\"name\":\"$CONTAINER\",\"command\":[\"npx\",\"prisma\",\"migrate\",\"deploy\"]}]}" \
+            --query 'tasks[0].taskArn' --output text)
+          echo "Migration task $TASK"
+          aws ecs wait tasks-stopped --cluster "$CLUSTER" --tasks "$TASK"
+          aws logs get-log-events --log-group-name "/ecs/$CLUSTER" \
+            --log-stream-name "portal/$CONTAINER/${TASK##*/}" \
+            --query 'events[].message' --output text | tr '\t' '\n' | grep -v 'npm notice' || true
+          EXIT=$(aws ecs describe-tasks --cluster "$CLUSTER" --tasks "$TASK" \
+            --query 'tasks[0].containers[0].exitCode' --output text)
+          if [ "$EXIT" != "0" ]; then
+            echo "::error::Migrations failed (exit code $EXIT). The running version is unchanged."
+            exit 1
+          fi
+
+      # The circuit breaker rolls back if the new tasks don't become healthy, so wait for this
+      # deployment's own rollout to finish rather than for the service to settle. ECS marks it
+      # COMPLETED a little after the old task has drained.
+      - name: Roll out
+        run: |
+          DEPLOYMENT=$(aws ecs update-service --cluster "$CLUSTER" --service "$SERVICE" \
+            --task-definition "${{ steps.taskdef.outputs.arn }}" \
+            --query 'service.deployments[?status==`PRIMARY`].id' --output text)
+          echo "Deployment $DEPLOYMENT"
+          for _ in $(seq 1 60); do
+            STATE=$(aws ecs describe-services --cluster "$CLUSTER" --services "$SERVICE" \
+              --query "services[0].deployments[?id=='$DEPLOYMENT'].rolloutState | [0]" --output text)
+            case "$STATE" in
+              COMPLETED) echo "Rolled out."; exit 0 ;;
+              FAILED) echo "::error::The new version didn't become healthy and was rolled back."; exit 1 ;;
+              None) echo "::error::The deployment was replaced, probably rolled back."; exit 1 ;;
+            esac
+            sleep 15
+          done
+          echo "::error::Rollout still $STATE after 15 minutes."
+          exit 1
+
+      - name: Check the site
+        run: curl --fail --silent --show-error --retry 5 --retry-delay 5 "$SITE_URL/api/health"

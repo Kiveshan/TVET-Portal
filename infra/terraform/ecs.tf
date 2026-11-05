@@ -33,6 +33,25 @@ resource "aws_ecs_cluster" "main" {
   }
 }
 
+# GitHub Actions deploys by registering a new task definition and updating the service, outside
+# Terraform. Reading the image back from the running service means an apply without image_tag
+# keeps the deployed version instead of rolling it back.
+data "aws_ecs_service" "current" {
+  count        = var.image_tag == null ? 1 : 0
+  cluster_arn  = aws_ecs_cluster.main.arn
+  service_name = "portal"
+}
+
+data "aws_ecs_container_definition" "current" {
+  count           = var.image_tag == null ? 1 : 0
+  task_definition = data.aws_ecs_service.current[0].task_definition
+  container_name  = local.container_name
+}
+
+locals {
+  image = var.image_tag != null ? "${aws_ecr_repository.app.repository_url}:${var.image_tag}" : data.aws_ecs_container_definition.current[0].image
+}
+
 resource "aws_ecs_task_definition" "app" {
   family                   = local.name
   requires_compatibilities = ["FARGATE"]
@@ -50,7 +69,7 @@ resource "aws_ecs_task_definition" "app" {
   # NODE_ENV, PORT, STATIC_DIR and TRUST_PROXY are set in the image.
   container_definitions = jsonencode([{
     name         = local.container_name
-    image        = "${aws_ecr_repository.app.repository_url}:${var.image_tag}"
+    image        = local.image
     essential    = true
     portMappings = [{ containerPort = local.container_port, protocol = "tcp" }]
 

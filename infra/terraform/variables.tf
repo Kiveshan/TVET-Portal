@@ -23,7 +23,28 @@ variable "vpc_cidr" {
 # --- Application ---
 
 variable "image_tag" {
-  description = "Tag of the image in ECR to run. Deploy a new version by applying with a new tag."
+  description = <<-EOT
+    Tag of the image in ECR to run. Leave unset to keep whatever image is deployed now, which is
+    how GitHub Actions deploys: it updates the service itself. Required for a new environment.
+  EOT
+  type        = string
+  default     = null
+}
+
+variable "github_repository" {
+  description = "Repository whose workflows may deploy, as owner/name."
+  type        = string
+  default     = "Kiveshan/TVET-Portal"
+}
+
+variable "github_subject_prefix" {
+  description = "sub_claim_prefix from: gh api repos/<owner>/<repo>/actions/oidc/customization/sub"
+  type        = string
+  default     = "repo:Kiveshan@102474568/TVET-Portal@1435463757"
+}
+
+variable "deploy_branch" {
+  description = "Branch whose pushes deploy to this environment."
   type        = string
 }
 
@@ -37,10 +58,17 @@ variable "approved_bucket" {
   type        = string
 }
 
-variable "certificate_arn" {
+variable "hosted_zone_name" {
+  description = "Public Route 53 zone in this account that the portal's name lives in."
+  type        = string
+  default     = "tvet-portal.co.za"
+}
+
+variable "domain_name" {
   description = <<-EOT
-    ACM certificate (in the same region) for the portal's domain. Without one the load balancer
-    serves plain HTTP, and sign-in won't work: the session cookie is Secure in production.
+    The portal's address, e.g. staging.tvet-portal.co.za. Terraform issues its certificate and
+    points it at the load balancer. Leave empty to serve plain HTTP on the load balancer's own
+    name, but then sign-in won't work: the session cookie is Secure in production.
   EOT
   type        = string
   default     = ""
